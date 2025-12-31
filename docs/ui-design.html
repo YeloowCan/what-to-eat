@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What-to-Eat - 今天吃什么</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 414px;
+            margin: 0 auto;
+            background: #fff;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Header */
+        .header {
+            background: #49aa19;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .header .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* Navigation */
+        .nav {
+            display: flex;
+            background: white;
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 80px;
+            z-index: 99;
+        }
+
+        .nav-item {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .nav-item.active {
+            color: #49aa19;
+            border-bottom-color: #49aa19;
+            font-weight: 600;
+        }
+
+        /* Page Content */
+        .page {
+            display: none;
+            padding: 20px;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Card */
+        .card {
+            background: white;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid #eee;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .card-subtitle {
+            font-size: 13px;
+            color: #999;
+            margin-bottom: 12px;
+        }
+
+        /* Button */
+        .btn {
+            background: #49aa19;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            background: #3d8a14;
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8e8;
+        }
+
+        /* Home Page */
+        .greeting {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .greeting h2 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .greeting p {
+            color: #999;
+            font-size: 14px;
+        }
+
+        .recommend-card {
+            text-align: center;
+            padding: 24px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border: 1px solid #eee;
+        }
+
+        .dish-name {
+            font-size: 28px;
+            font-weight: 600;
+            color: #333;
+            margin: 15px 0;
+        }
+
+        .dish-info {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .dish-info-item {
+            text-align: center;
+        }
+
+        .dish-info-label {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 5px;
+        }
+
+        .dish-info-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .category-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .tag {
+            background: #f0f0f0;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Record Page */
+        .meal-section {
+            margin-bottom: 25px;
+        }
+
+        .meal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .meal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .meal-time {
+            font-size: 14px;
+            color: #999;
+        }
+
+        .meal-content {
+            background: #f8f9fa;
+            border-radius: 4px;
+            padding: 15px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            border: 1px dashed #ddd;
+            cursor: pointer;
+        }
+
+        .meal-content:hover {
+            border-color: #49aa19;
+        }
+
+        .meal-content.has-content {
+            border: 1px solid #49aa19;
+            background: white;
+            justify-content: space-between;
+        }
+
+        .meal-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .meal-item-icon {
+            width: 40px;
+            height: 40px;
+            background: #49aa19;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .meal-item-info {
+            flex: 1;
+        }
+
+        .meal-item-name {
+            font-weight: 500;
+            margin-bottom: 3px;
+        }
+
+        .meal-item-cal {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .add-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 4px;
+            background: #49aa19;
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            position: fixed;
+            bottom: 100px;
+            right: calc(50% - 207px + 20px);
+            z-index: 10;
+        }
+
+        /* Health Page */
+        .health-score {
+            text-align: center;
+            padding: 24px;
+            background: #49aa19;
+            border-radius: 4px;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .score-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 4px;
+            border: 2px solid rgba(255,255,255,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            font-size: 32px;
+            font-weight: 600;
+        }
+
+        .nutrition-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .nutrition-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .nutrition-label {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 8px;
+        }
+
+        .nutrition-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .nutrition-progress {
+            width: 100%;
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .nutrition-progress-bar {
+            height: 100%;
+            background: #49aa19;
+            border-radius: 2px;
+        }
+
+        .suggestion-list {
+            list-style: none;
+        }
+
+        .suggestion-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            border-left: 3px solid #49aa19;
+        }
+
+        .suggestion-item-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .suggestion-item-desc {
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* Profile Page */
+        .profile-header {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 4px;
+            background: #49aa19;
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .profile-name {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .profile-email {
+            color: #999;
+            font-size: 14px;
+        }
+
+        .menu-list {
+            list-style: none;
+        }
+
+        .menu-item {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .menu-item:hover {
+            background: #f8f9fa;
+        }
+
+        .menu-item-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .menu-icon {
+            width: 40px;
+            height: 40px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #49aa19;
+            font-weight: 600;
+        }
+
+        .menu-item-right {
+            color: #999;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 414px;
+            background: white;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 100;
+        }
+
+        .bottom-nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            cursor: pointer;
+            transition: color 0.3s;
+            color: #999;
+        }
+
+        .bottom-nav-item.active {
+            color: #49aa19;
+        }
+
+        .bottom-nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .bottom-nav-label {
+            font-size: 12px;
+        }
+
+        /* Utility */
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-20 {
+            margin-top: 20px;
+        }
+
+        .mb-20 {
+            margin-bottom: 20px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>What-to-Eat</h1>
+            <div class="subtitle">智能饮食助手</div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav">
+            <div class="nav-item active" onclick="switchPage('home')">推荐</div>
+            <div class="nav-item" onclick="switchPage('record')">记录</div>
+            <div class="nav-item" onclick="switchPage('health')">健康</div>
+            <div class="nav-item" onclick="switchPage('profile')">我的</div>
+        </div>
+
+        <!-- Home Page -->
+        <div id="home" class="page active">
+            <div class="greeting">
+                <h2>今天吃什么？</h2>
+                <p>让AI为你推荐</p>
+            </div>
+
+            <div class="recommend-card">
+                <div class="dish-name">宫保鸡丁</div>
+                <div class="dish-info">
+                    <div class="dish-info-item">
+                        <div class="dish-info-label">卡路里</div>
+                        <div class="dish-info-value">320</div>
+                    </div>
+                    <div class="dish-info-item">
+                        <div class="dish-info-label">蛋白质</div>
+                        <div class="dish-info-value">28g</div>
+                    </div>
+                    <div class="dish-info-item">
+                        <div class="dish-info-label">健康度</div>
+                        <div class="dish-info-value">85%</div>
+                    </div>
+                </div>
+                <div class="category-tags">
+                    <span class="tag">川菜</span>
+                    <span class="tag">微辣</span>
+                    <span class="tag">高蛋白</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">个性化推荐</div>
+                <div class="card-subtitle">基于你的饮食偏好和历史记录</div>
+                <button class="btn" onclick="refreshRecommend()">换一个</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">今日建议</div>
+                <div class="card-subtitle">根据你的健康目标定制</div>
+                <ul class="suggestion-list">
+                    <li class="suggestion-item">
+                        <div class="suggestion-item-title">增加蔬菜摄入</div>
+                        <div class="suggestion-item-desc">建议午餐添加一份绿色蔬菜，补充维生素</div>
+                    </li>
+                    <li class="suggestion-item">
+                        <div class="suggestion-item-title">控制晚餐热量</div>
+                        <div class="suggestion-item-desc">今日已摄入1200卡，晚餐建议控制在400卡以内</div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Record Page -->
+        <div id="record" class="page">
+            <div class="card">
+                <div class="card-title">今日饮食记录</div>
+                <div class="card-subtitle">2025年12月31日</div>
+            </div>
+
+            <div class="meal-section">
+                <div class="meal-header">
+                    <div class="meal-title">早餐</div>
+                    <div class="meal-time">07:30</div>
+                </div>
+                <div class="meal-content has-content">
+                    <div class="meal-item">
+                        <div class="meal-item-icon">🍳</div>
+                        <div class="meal-item-info">
+                            <div class="meal-item-name">煎蛋 + 全麦面包</div>
+                            <div class="meal-item-cal">280 卡路里</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="meal-section">
+                <div class="meal-header">
+                    <div class="meal-title">午餐</div>
+                    <div class="meal-time">12:15</div>
+                </div>
+                <div class="meal-content has-content">
+                    <div class="meal-item">
+                        <div class="meal-item-icon">🍱</div>
+                        <div class="meal-item-info">
+                            <div class="meal-item-name">宫保鸡丁 + 米饭</div>
+                            <div class="meal-item-cal">520 卡路里</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="meal-section">
+                <div class="meal-header">
+                    <div class="meal-title">晚餐</div>
+                    <div class="meal-time">--:--</div>
+                </div>
+                <div class="meal-content" onclick="addMeal('dinner')">
+                    <span>点击添加晚餐记录</span>
+                </div>
+            </div>
+
+            <div class="meal-section">
+                <div class="meal-header">
+                    <div class="meal-title">加餐</div>
+                    <div class="meal-time">--:--</div>
+                </div>
+                <div class="meal-content" onclick="addMeal('snack')">
+                    <span>点击添加加餐记录</span>
+                </div>
+            </div>
+
+            <button class="add-btn" onclick="addMeal()" title="添加记录">+</button>
+        </div>
+
+        <!-- Health Page -->
+        <div id="health" class="page">
+            <div class="health-score">
+                <div class="score-circle">85</div>
+                <div style="font-size: 18px; margin-bottom: 5px;">今日健康评分</div>
+                <div style="font-size: 14px; opacity: 0.9;">营养均衡，继续保持</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">营养分析</div>
+                <div class="nutrition-grid">
+                    <div class="nutrition-item">
+                        <div class="nutrition-label">卡路里</div>
+                        <div class="nutrition-value">800 / 1800</div>
+                        <div class="nutrition-progress">
+                            <div class="nutrition-progress-bar" style="width: 44%"></div>
+                        </div>
+                    </div>
+                    <div class="nutrition-item">
+                        <div class="nutrition-label">蛋白质</div>
+                        <div class="nutrition-value">45 / 90g</div>
+                        <div class="nutrition-progress">
+                            <div class="nutrition-progress-bar" style="width: 50%"></div>
+                        </div>
+                    </div>
+                    <div class="nutrition-item">
+                        <div class="nutrition-label">脂肪</div>
+                        <div class="nutrition-value">28 / 60g</div>
+                        <div class="nutrition-progress">
+                            <div class="nutrition-progress-bar" style="width: 47%"></div>
+                        </div>
+                    </div>
+                    <div class="nutrition-item">
+                        <div class="nutrition-label">碳水</div>
+                        <div class="nutrition-value">95 / 225g</div>
+                        <div class="nutrition-progress">
+                            <div class="nutrition-progress-bar" style="width: 42%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">健康建议</div>
+                <ul class="suggestion-list">
+                    <li class="suggestion-item">
+                        <div class="suggestion-item-title">✓ 营养均衡</div>
+                        <div class="suggestion-item-desc">今日三大营养素比例合理，继续保持</div>
+                    </li>
+                    <li class="suggestion-item">
+                        <div class="suggestion-item-title">💡 增加蔬菜</div>
+                        <div class="suggestion-item-desc">建议晚餐添加一份绿色蔬菜，补充膳食纤维和维生素</div>
+                    </li>
+                    <li class="suggestion-item">
+                        <div class="suggestion-item-title">💡 控制热量</div>
+                        <div class="suggestion-item-desc">今日剩余热量预算充足，可适当增加优质蛋白摄入</div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <div class="card-title">本周趋势</div>
+                <div class="card-subtitle">健康评分变化</div>
+                <div style="padding: 20px; text-align: center; color: #999;">
+                    <div style="font-size: 48px; margin-bottom: 10px;">📈</div>
+                    <div>本周平均评分：82分</div>
+                    <div style="font-size: 12px; margin-top: 5px; color: #49aa19;">较上周提升 5 分</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Page -->
+        <div id="profile" class="page">
+            <div class="profile-header">
+                <div class="avatar">张</div>
+                <div class="profile-name">张三</div>
+                <div class="profile-email">zhangsan@example.com</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">个人资料</div>
+                <div style="padding: 10px 0;">
+                    <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                        <span style="color: #999;">身高</span>
+                        <span style="font-weight: 500;">175 cm</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                        <span style="color: #999;">体重</span>
+                        <span style="font-weight: 500;">70 kg</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                        <span style="color: #999;">年龄</span>
+                        <span style="font-weight: 500;">28 岁</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 12px 0;">
+                        <span style="color: #999;">健康目标</span>
+                        <span style="font-weight: 500;">维持健康</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">数据统计</div>
+                <div class="nutrition-grid">
+                    <div class="nutrition-item">
+                        <div class="nutrition-label">连续记录</div>
+                        <div class="nutrition-value">15 天</div>
+                    </div>
+                    <div class="nutrition-item">
+                        <div class="nutrition-label">平均评分</div>
+                        <div class="nutrition-value">82 分</div>
+                    </div>
+                    <div class="nutrition-item">
+                        <div class="nutrition-label">总记录数</div>
+                        <div class="nutrition-value">45 条</div>
+                    </div>
+                    <div class="nutrition-item">
+                        <div class="nutrition-label">最爱菜品</div>
+                        <div class="nutrition-value">宫保鸡丁</div>
+                    </div>
+                </div>
+            </div>
+
+            <ul class="menu-list">
+                <li class="menu-item">
+                    <div class="menu-item-left">
+                        <div class="menu-icon">⚙️</div>
+                        <div>设置</div>
+                    </div>
+                    <div class="menu-item-right">›</div>
+                </li>
+                <li class="menu-item">
+                    <div class="menu-item-left">
+                        <div class="menu-icon">📊</div>
+                        <div>数据导出</div>
+                    </div>
+                    <div class="menu-item-right">›</div>
+                </li>
+                <li class="menu-item">
+                    <div class="menu-item-left">
+                        <div class="menu-icon">❓</div>
+                        <div>帮助与反馈</div>
+                    </div>
+                    <div class="menu-item-right">›</div>
+                </li>
+                <li class="menu-item">
+                    <div class="menu-item-left">
+                        <div class="menu-icon">ℹ️</div>
+                        <div>关于</div>
+                    </div>
+                    <div class="menu-item-right">›</div>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <div class="bottom-nav-item active" onclick="switchBottomNav('home')">
+                <div class="bottom-nav-icon">🏠</div>
+                <div class="bottom-nav-label">推荐</div>
+            </div>
+            <div class="bottom-nav-item" onclick="switchBottomNav('record')">
+                <div class="bottom-nav-icon">📝</div>
+                <div class="bottom-nav-label">记录</div>
+            </div>
+            <div class="bottom-nav-item" onclick="switchBottomNav('health')">
+                <div class="bottom-nav-icon">💚</div>
+                <div class="bottom-nav-label">健康</div>
+            </div>
+            <div class="bottom-nav-item" onclick="switchBottomNav('profile')">
+                <div class="bottom-nav-icon">👤</div>
+                <div class="bottom-nav-label">我的</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Show selected page
+            document.getElementById(pageId).classList.add('active');
+            
+            // Update nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        function switchBottomNav(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Show selected page
+            document.getElementById(pageId).classList.add('active');
+            
+            // Update nav items
+            document.querySelectorAll('.nav-item').forEach((item, index) => {
+                item.classList.remove('active');
+                const pages = ['home', 'record', 'health', 'profile'];
+                if (pages[index] === pageId) {
+                    item.classList.add('active');
+                }
+            });
+            
+            // Update bottom nav
+            document.querySelectorAll('.bottom-nav-item').forEach((item, index) => {
+                item.classList.remove('active');
+                const pages = ['home', 'record', 'health', 'profile'];
+                if (pages[index] === pageId) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        function refreshRecommend() {
+            const dishes = ['宫保鸡丁', '麻婆豆腐', '糖醋里脊', '红烧肉', '鱼香肉丝', '回锅肉', '水煮鱼', '酸菜鱼'];
+            const randomDish = dishes[Math.floor(Math.random() * dishes.length)];
+            document.querySelector('.dish-name').textContent = randomDish;
+            
+            // Add animation
+            const card = document.querySelector('.recommend-card');
+            card.style.animation = 'none';
+            setTimeout(() => {
+                card.style.animation = 'fadeIn 0.5s';
+            }, 10);
+        }
+
+        function addMeal(type) {
+            alert('打开相机或手动输入界面\n（实际应用中会打开相机或表单）');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('What-to-Eat UI Design Loaded');
+        });
+    </script>
+</body>
+</html>
+
