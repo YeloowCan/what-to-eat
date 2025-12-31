@@ -224,5 +224,152 @@
 
 ---
 
+---
+
+## 前端项目结构（mobile/）
+
+### 根目录配置文件
+
+#### `package.json`
+- **作用**：项目依赖管理和脚本配置
+- **关键脚本**：
+  - `start` - 启动 Expo 开发服务器
+  - `android` - 在 Android 设备/模拟器上运行
+  - `ios` - 在 iOS 设备/模拟器上运行
+  - `web` - 在 Web 浏览器中运行
+  - `lint` - 运行 ESLint 代码检查
+- **包管理工具**：pnpm
+- **主要依赖**：
+  - `expo` - Expo SDK 核心
+  - `expo-router` - 文件系统路由
+  - `react-native` - React Native 框架
+  - `react-native-safe-area-context` - 安全区域上下文
+  - `react-native-screens` - 原生屏幕组件
+
+#### `app.json`
+- **作用**：Expo 应用配置文件
+- **配置内容**：
+  - 应用名称、版本、图标配置
+  - 启动画面配置（背景色：`#49aa19`）
+  - 平台特定配置（iOS、Android、Web）
+  - Expo Router 插件配置
+- **注意**：当前使用 Expo 默认图标，未配置自定义图标路径
+
+#### `tsconfig.json`
+- **作用**：TypeScript 编译器配置
+- **关键配置**：
+  - `extends: "expo/tsconfig.base"` - 继承 Expo 基础配置
+  - `strict: true` - 启用严格模式
+  - `paths: { "@/*": ["./*"] }` - 路径别名配置
+
+#### `eslint.config.js`
+- **作用**：ESLint 代码质量检查配置
+- **配置**：使用 `eslint-config-expo` 作为基础配置
+
+#### `expo-env.d.ts`
+- **作用**：Expo 类型定义文件
+- **内容**：引用 Expo 的类型定义
+
+#### `.gitignore`
+- **作用**：Git 版本控制忽略文件配置
+- **忽略内容**：
+  - `node_modules/` - 依赖包目录
+  - `.expo/` - Expo 构建缓存
+  - `dist/` - 构建输出目录
+  - `web-build/` - Web 构建输出
+  - `.env` - 环境变量文件
+  - `*.log` - 日志文件
+
+#### `pnpm-lock.yaml`
+- **作用**：pnpm 依赖锁定文件，确保团队成员安装相同版本的依赖
+
+---
+
+### 应用目录（app/）
+
+#### `app/_layout.tsx`
+- **作用**：Expo Router 根布局组件
+- **功能**：
+  - 定义应用的根导航结构
+  - 使用 `Stack` 导航器提供堆栈导航
+  - 所有页面都在此布局下渲染
+- **路由系统**：Expo Router 使用文件系统路由，`app/` 目录下的文件自动成为路由
+
+#### `app/index.tsx`
+- **作用**：应用首页组件
+- **路由**：对应根路径 `/`
+- **当前内容**：显示简单的欢迎界面
+
+---
+
+### 资源目录（assets/）
+
+#### `assets/images/`
+- **作用**：存放应用的图片资源
+- **包含文件**：
+  - `icon.png` - 应用图标
+  - `splash-icon.png` - 启动画面图标
+  - `favicon.png` - Web 图标
+  - `android-icon-*.png` - Android 自适应图标资源
+- **注意**：当前 `app.json` 未引用这些文件，使用 Expo 默认图标
+
+---
+
+### 示例代码目录（app-example/）
+
+#### `app-example/`
+- **作用**：Expo 提供的示例代码，供参考学习
+- **包含内容**：
+  - 标签导航示例
+  - 主题化组件示例
+  - 各种 UI 组件示例
+- **注意**：此目录仅作参考，不影响应用运行
+
+---
+
+## 前端架构设计原则
+
+### 1. 文件系统路由
+- 使用 Expo Router 的文件系统路由
+- `app/` 目录下的文件自动成为路由
+- `_layout.tsx` 文件定义布局和嵌套路由
+- 文件名对应路由路径
+
+### 2. 组件化设计
+- 每个页面是一个独立的组件
+- 可复用组件放在 `components/` 目录（后续创建）
+- 使用 TypeScript 提供类型安全
+
+### 3. 样式管理
+- 使用 StyleSheet.create 创建样式
+- 保持样式简洁，避免过度装饰
+- 主色调：`#49aa19`（绿色）
+
+### 4. 状态管理
+- 后续将使用 Zustand 进行全局状态管理
+- 使用 React Query 进行数据获取和缓存
+
+---
+
+## 前端开发指南
+
+### 添加新页面
+1. 在 `app/` 目录下创建新的 `.tsx` 文件
+2. 文件名对应路由路径（如 `app/about.tsx` 对应 `/about`）
+3. 导出默认组件
+
+### 添加布局
+1. 创建 `_layout.tsx` 文件定义布局
+2. 使用 `Stack`、`Tabs` 等导航器
+3. 嵌套布局支持
+
+### 代码规范
+- 遵循 `.cursorrules` 中的规范
+- 使用单引号
+- 使用尾随逗号
+- 运行 `pnpm run lint` 检查代码
+
+---
+
 **最后更新**：2025年12月31日
 

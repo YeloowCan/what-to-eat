@@ -88,3 +88,52 @@
 
 ---
 
+### ✅ 0.3 初始化前端项目（已完成）
+
+**完成时间**：2025年12月31日
+
+**完成内容**：
+1. 使用 Expo CLI 在 `mobile` 目录下创建了新的 Expo 项目
+2. 选择了 TypeScript 模板
+3. 配置了 Expo Router 作为路由系统
+4. 使用 pnpm 作为包管理工具
+5. 配置了 ESLint（使用 expo 配置）
+6. 创建了基础的应用结构
+
+**创建的文件和目录**：
+- `package.json` - 项目配置和依赖管理
+- `app.json` - Expo 应用配置
+- `tsconfig.json` - TypeScript 编译配置
+- `eslint.config.js` - ESLint 代码检查配置
+- `expo-env.d.ts` - Expo 类型定义文件
+- `app/` - 应用页面目录（Expo Router 文件系统路由）
+  - `_layout.tsx` - 根布局组件
+  - `index.tsx` - 首页组件
+- `assets/` - 资源文件目录
+  - `images/` - 图片资源（图标、启动画面等）
+- `app-example/` - 示例代码目录（参考用）
+
+**验证结果**：
+- ✅ `pnpm expo start` - 开发服务器成功启动
+- ✅ 在 Expo Go 应用中扫描二维码，能看到默认的欢迎界面
+- ✅ `pnpm run lint` - 代码检查通过，无 lint 错误
+- ✅ 应用能正常加载和显示
+
+**技术细节**：
+- Expo SDK 版本：~54.0.30
+- React Native 版本：0.81.5
+- React 版本：19.1.0
+- Expo Router 版本：~6.0.21
+- TypeScript 版本：~5.9.2
+- 使用 Expo Router 的文件系统路由（基于 `app/` 目录结构）
+- 已配置必要的依赖：react-native-safe-area-context、react-native-screens 等
+
+**项目结构说明**：
+- Expo Router 使用文件系统路由，`app/` 目录下的文件自动成为路由
+- `_layout.tsx` 是布局文件，使用 Stack 导航器
+- `index.tsx` 对应根路径 `/`
+
+**下一步**：0.4 配置前端环境变量
+
+---
+
