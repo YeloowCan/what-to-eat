@@ -1,0 +1,392 @@
+---
+description: "NestJS 后端开发规范"
+globs: ["**/*.ts", "**/*.js"]
+alwaysApply: true
+---
+
+# NestJS 后端开发规范
+
+## 技术栈
+
+- **框架**: NestJS
+- **语言**: TypeScript
+- **数据库**: PostgreSQL
+- **ORM**: TypeORM
+- **认证**: Passport + JWT
+- **验证**: class-validator + class-transformer
+- **包管理**: pnpm
+
+## 代码风格
+
+- 使用 2 个空格进行缩进
+- 使用单引号而非双引号
+- 使用分号结束语句
+- 每行代码不超过 100 个字符
+- 使用 TypeScript 严格模式
+- 文件名使用 kebab-case，如 `user.service.ts`
+- 类名使用 PascalCase，如 `UserService`
+- 变量和函数使用 camelCase
+
+## 项目结构
+
+```
+server/
+├── src/
+│   ├── main.ts                    # 应用入口
+│   ├── app.module.ts              # 根模块
+│   ├── common/                    # 通用模块
+│   │   ├── decorators/           # 自定义装饰器
+│   │   ├── filters/              # 异常过滤器
+│   │   ├── guards/               # 守卫
+│   │   ├── interceptors/         # 拦截器
+│   │   └── pipes/                # 管道
+│   ├── config/                    # 配置文件
+│   ├── database/                  # 数据库配置
+│   │   └── migrations/           # 数据库迁移
+│   ├── modules/                   # 业务模块
+│   │   ├── auth/                 # 认证模块
+│   │   ├── users/                # 用户模块
+│   │   ├── dishes/               # 菜品模块
+│   │   ├── diet-records/         # 饮食记录模块
+│   │   ├── health-analysis/      # 健康分析模块
+│   │   └── recommendations/      # 推荐模块
+│   └── utils/                     # 工具函数
+├── test/                           # 测试文件
+└── package.json
+```
+
+## 模块化设计
+
+### 模块结构
+
+每个业务模块应包含：
+- `*.module.ts` - 模块定义
+- `*.controller.ts` - 控制器（路由处理）
+- `*.service.ts` - 业务逻辑
+- `*.entity.ts` - 数据库实体
+- `dto/` - 数据传输对象
+- `*.spec.ts` - 单元测试
+
+```typescript
+// ✅ 模块示例
+@Module({
+  imports: [TypeOrmModule.forFeature([User])],
+  controllers: [UsersController],
+  providers: [UsersService],
+  exports: [UsersService],
+})
+export class UsersModule {}
+```
+
+## 控制器规范
+
+- 控制器只负责处理 HTTP 请求和响应
+- 业务逻辑放在 Service 中
+- 使用装饰器定义路由和参数验证
+- 返回统一的响应格式
+
+```typescript
+// ✅ 控制器示例
+@Controller('users')
+@UseGuards(JwtAuthGuard)
+export class UsersController {
+  constructor(private readonly usersService: UsersService) {}
+
+  @Get('profile')
+  async getProfile(@CurrentUser() user: User) {
+    return {
+      success: true,
+      data: await this.usersService.findOne(user.id),
+    };
+  }
+
+  @Put('profile')
+  async updateProfile(
+    @CurrentUser() user: User,
+    @Body() updateDto: UpdateUserDto,
+  ) {
+    return {
+      success: true,
+      data: await this.usersService.update(user.id, updateDto),
+    };
+  }
+}
+```
+
+## Service 规范
+
+- Service 包含所有业务逻辑
+- 使用依赖注入
+- 方法应该是异步的（async/await）
+- 处理业务异常
+
+```typescript
+// ✅ Service 示例
+@Injectable()
+export class UsersService {
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+  ) {}
+
+  async findOne(id: number): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException('用户不存在');
+    }
+    return user;
+  }
+
+  async update(id: number, updateDto: UpdateUserDto): Promise<User> {
+    await this.userRepository.update(id, updateDto);
+    return this.findOne(id);
+  }
+}
+```
+
+## DTO 规范
+
+- 使用 class-validator 进行验证
+- 使用 class-transformer 进行数据转换
+- DTO 文件放在模块的 `dto/` 目录
+
+```typescript
+// ✅ DTO 示例
+export class CreateUserDto {
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(3)
+  @MaxLength(50)
+  username: string;
+
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @IsString()
+  @MinLength(6)
+  password: string;
+}
+```
+
+## 实体规范
+
+- 使用 TypeORM 装饰器定义实体
+- 实体类名使用 PascalCase
+- 表名使用 snake_case
+- 定义明确的字段类型和约束
+
+```typescript
+// ✅ 实体示例
+@Entity('users')
+export class User {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column({ unique: true })
+  username: string;
+
+  @Column({ unique: true })
+  email: string;
+
+  @Column()
+  passwordHash: string;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+}
+```
+
+## 数据库操作
+
+- 使用 TypeORM Repository 进行数据库操作
+- 使用 Query Builder 进行复杂查询
+- 使用事务处理多个操作
+- 避免 N+1 查询问题
+
+```typescript
+// ✅ 使用 Repository
+const user = await this.userRepository.findOne({ where: { id } });
+
+// ✅ 使用 Query Builder
+const users = await this.userRepository
+  .createQueryBuilder('user')
+  .where('user.age > :age', { age: 18 })
+  .getMany();
+
+// ✅ 使用事务
+await this.dataSource.transaction(async (manager) => {
+  await manager.save(user1);
+  await manager.save(user2);
+});
+```
+
+## 认证与授权
+
+- 使用 Passport JWT 策略进行认证
+- 使用 Guards 保护路由
+- 使用自定义装饰器获取当前用户
+
+```typescript
+// ✅ Guard 使用
+@UseGuards(JwtAuthGuard)
+@Controller('protected')
+export class ProtectedController {}
+
+// ✅ 自定义装饰器
+export const CurrentUser = createParamDecorator(
+  (data: unknown, ctx: ExecutionContext) => {
+    const request = ctx.switchToHttp().getRequest();
+    return request.user;
+  },
+);
+```
+
+## 错误处理
+
+- 使用 NestJS 内置异常类
+- 创建全局异常过滤器
+- 返回统一的错误响应格式
+
+```typescript
+// ✅ 异常使用
+throw new NotFoundException('资源不存在');
+throw new BadRequestException('请求参数错误');
+throw new UnauthorizedException('未授权');
+
+// ✅ 全局异常过滤器
+@Catch()
+export class AllExceptionsFilter implements ExceptionFilter {
+  catch(exception: unknown, host: ArgumentsHost) {
+    // 统一错误处理
+  }
+}
+```
+
+## 环境变量
+
+- 使用 @nestjs/config 管理配置
+- 敏感信息使用环境变量
+- 配置验证使用 Joi
+
+```typescript
+// ✅ 配置模块
+ConfigModule.forRoot({
+  isGlobal: true,
+  validationSchema: Joi.object({
+    DB_HOST: Joi.string().required(),
+    DB_PORT: Joi.number().default(5432),
+    JWT_SECRET: Joi.string().required(),
+  }),
+});
+```
+
+## API 响应格式
+
+- 统一响应格式
+- 成功响应包含 `success`, `data`, `message`
+- 错误响应包含 `success`, `error`
+
+```typescript
+// ✅ 统一响应格式
+{
+  success: true,
+  data: { ... },
+  message: '操作成功'
+}
+
+{
+  success: false,
+  error: {
+    code: 'ERROR_CODE',
+    message: '错误描述'
+  }
+}
+```
+
+## 测试
+
+- 使用 Jest 进行单元测试和集成测试
+- 使用 Supertest 测试 HTTP 端点
+- 测试文件使用 `.spec.ts` 后缀
+- 目标测试覆盖率：80%+
+
+```typescript
+// ✅ 测试示例
+describe('UsersService', () => {
+  let service: UsersService;
+
+  beforeEach(async () => {
+    const module = await Test.createTestingModule({
+      providers: [UsersService],
+    }).compile();
+    service = module.get<UsersService>(UsersService);
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+});
+```
+
+## 数据库迁移
+
+- 使用 TypeORM Migrations 管理数据库版本
+- 迁移文件命名：`{timestamp}-{name}.ts`
+- 每次数据库结构变更都要创建迁移
+
+```bash
+# 生成迁移
+pnpm run migration:generate -- -n MigrationName
+
+# 运行迁移
+pnpm run migration:run
+
+# 回滚迁移
+pnpm run migration:revert
+```
+
+## 性能优化
+
+- 使用数据库索引优化查询
+- 使用缓存（Redis）缓存热点数据
+- 使用分页处理大量数据
+- 优化数据库查询，避免 N+1 问题
+
+## 安全规范
+
+- 密码使用 bcrypt 加密存储
+- JWT Token 使用强密钥
+- 实现 Rate Limiting
+- 输入验证和 SQL 注入防护
+- 使用 HTTPS
+- CORS 配置
+
+## 日志
+
+- 使用 Winston 或 Pino 记录日志
+- 记录关键操作和错误
+- 使用结构化日志（JSON 格式）
+
+## 代码提交
+
+- 提交信息遵循 Conventional Commits 格式
+- 类型: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+- 示例: `feat: 添加用户认证功能`
+
+## 依赖管理
+
+- 使用 pnpm 管理依赖
+- 定期更新依赖到最新稳定版本
+- 添加新依赖前评估其必要性和安全性
+
+## 注意事项
+
+- 避免在 Service 中直接处理 HTTP 请求/响应
+- 避免在 Controller 中编写业务逻辑
+- 使用依赖注入，避免直接实例化
+- 遵循 SOLID 原则
+- 保持代码简洁和可维护性

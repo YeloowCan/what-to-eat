@@ -1,0 +1,240 @@
+---
+description: "React Native + Expo 前端开发规范"
+globs: ["**/*.tsx", "**/*.ts", "**/*.jsx", "**/*.js"]
+alwaysApply: true
+---
+
+# React Native + Expo 前端开发规范
+
+## 技术栈
+
+- **框架**: React Native + Expo
+- **语言**: TypeScript
+- **状态管理**: Zustand
+- **数据获取**: React Query (@tanstack/react-query)
+- **路由**: Expo Router
+- **UI组件**: React Native Paper
+- **表单**: React Hook Form
+- **包管理**: pnpm
+
+## 代码风格
+
+- 使用 2 个空格进行缩进
+- 使用单引号而非双引号
+- 使用分号结束语句
+- 每行代码不超过 100 个字符
+- 使用 TypeScript 严格模式
+- 组件文件名使用 PascalCase，如 `UserProfile.tsx`
+- 工具函数和 hooks 使用 camelCase，如 `useAuth.ts`
+- 常量文件使用 UPPER_SNAKE_CASE，如 `API_CONSTANTS.ts`
+
+## 项目结构
+
+```
+mobile/
+├── app/                    # Expo Router 路由
+│   ├── (auth)/            # 认证相关页面
+│   ├── (tabs)/            # 底部导航页面
+│   └── _layout.tsx        # 根布局
+├── components/            # 可复用组件
+│   ├── common/           # 通用组件
+│   ├── forms/            # 表单组件
+│   └── cards/            # 卡片组件
+├── services/              # API 服务
+│   ├── api.ts            # API 客户端
+│   └── auth.ts           # 认证服务
+├── store/                 # 状态管理 (Zustand)
+├── hooks/                 # 自定义 Hooks
+├── utils/                 # 工具函数
+├── types/                 # TypeScript 类型定义
+└── constants/             # 常量定义
+```
+
+## 组件开发规范
+
+### 函数组件
+
+- 优先使用函数组件和 Hooks，避免使用类组件
+- 使用 TypeScript 定义组件 Props 类型
+- 组件应遵循单一职责原则
+- 组件应尽可能小且可复用
+
+```typescript
+// ✅ 好的示例
+interface UserCardProps {
+  name: string;
+  email: string;
+  onPress?: () => void;
+}
+
+export const UserCard: React.FC<UserCardProps> = ({ name, email, onPress }) => {
+  return (
+    <Card onPress={onPress}>
+      <Text>{name}</Text>
+      <Text>{email}</Text>
+    </Card>
+  );
+};
+```
+
+### Hooks 使用
+
+- 自定义 Hooks 以 `use` 开头
+- 使用 React Query 进行数据获取和缓存
+- 使用 Zustand 进行全局状态管理
+
+```typescript
+// ✅ 使用 React Query
+const { data, isLoading, error } = useQuery({
+  queryKey: ['dishes'],
+  queryFn: () => api.getDishes(),
+});
+
+// ✅ 使用 Zustand
+const useAuthStore = create((set) => ({
+  user: null,
+  setUser: (user) => set({ user }),
+}));
+```
+
+## 状态管理
+
+### 全局状态 (Zustand)
+
+- 使用 Zustand 管理全局状态（如用户信息、认证状态）
+- Store 文件放在 `store/` 目录
+- Store 命名使用 camelCase + Store 后缀，如 `authStore.ts`
+
+```typescript
+// store/authStore.ts
+interface AuthState {
+  user: User | null;
+  token: string | null;
+  login: (user: User, token: string) => void;
+  logout: () => void;
+}
+
+export const useAuthStore = create<AuthState>((set) => ({
+  user: null,
+  token: null,
+  login: (user, token) => set({ user, token }),
+  logout: () => set({ user: null, token: null }),
+}));
+```
+
+### 本地状态
+
+- 简单的 UI 状态使用 `useState`
+- 复杂的状态逻辑使用 `useReducer`
+
+## API 服务
+
+- 所有 API 调用统一在 `services/` 目录管理
+- 使用 axios 进行 HTTP 请求
+- 使用 React Query 的 `useQuery` 和 `useMutation`
+- 统一错误处理
+
+```typescript
+// services/api.ts
+import axios from 'axios';
+
+export const api = axios.create({
+  baseURL: process.env.EXPO_PUBLIC_API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// 请求拦截器
+api.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+```
+
+## 样式规范
+
+- 使用 StyleSheet.create 创建样式
+- 避免内联样式（除了动态样式）
+- 使用主题颜色常量，主色调为 `#49aa19`
+- 保持样式简洁，避免过度装饰
+
+```typescript
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#fff',
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+});
+```
+
+## 表单处理
+
+- 使用 React Hook Form 处理表单
+- 使用 class-validator 进行表单验证（如需要）
+- 提供清晰的错误提示
+
+```typescript
+const { control, handleSubmit, formState: { errors } } = useForm({
+  defaultValues: {
+    email: '',
+    password: '',
+  },
+});
+```
+
+## 错误处理
+
+- 使用 try-catch 处理异步错误
+- 使用 React Query 的错误处理机制
+- 向用户显示友好的错误信息
+- 记录错误日志（开发环境）
+
+## 性能优化
+
+- 使用 `React.memo` 优化组件渲染
+- 使用 `useMemo` 和 `useCallback` 优化计算和函数
+- 使用 FlatList 虚拟化长列表
+- 图片使用 Expo Image 组件，支持懒加载
+
+## 测试
+
+- 使用 Jest 和 React Native Testing Library
+- 测试组件渲染和用户交互
+- 测试 Hooks 和工具函数
+- 目标测试覆盖率：80%+
+
+## 代码提交
+
+- 提交信息遵循 Conventional Commits 格式
+- 类型: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+- 示例: `feat: 添加饮食记录功能`
+
+## 依赖管理
+
+- 使用 pnpm 管理依赖
+- 定期更新依赖到最新稳定版本
+- 添加新依赖前评估其必要性和维护状态
+
+## 环境变量
+
+- 使用 `EXPO_PUBLIC_` 前缀定义公共环境变量
+- 敏感信息不要放在环境变量中（使用后端 API）
+- 环境变量文件：`.env`, `.env.local`
+
+## 注意事项
+
+- 避免在组件中直接调用 API，使用 React Query
+- 避免过度使用 Context，优先使用 Zustand
+- 保持组件小而专注
+- 遵循 React Native 最佳实践
+- 注意内存泄漏（清理订阅和定时器）
