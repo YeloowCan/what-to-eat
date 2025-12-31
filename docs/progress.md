@@ -1,0 +1,90 @@
+# 开发进度记录
+
+本文档记录项目的开发进度，供后续开发者参考。
+
+---
+
+## 阶段 0：环境搭建
+
+### ✅ 0.1 初始化后端项目（已完成）
+
+**完成时间**：2025年12月31日
+
+**完成内容**：
+1. 使用 NestJS CLI 在 `server` 目录下创建了新的 NestJS 项目
+2. 项目已配置 TypeScript、ESLint、Prettier
+3. 使用 pnpm 作为包管理工具（已生成 `pnpm-lock.yaml`）
+4. 所有依赖已成功安装
+
+**创建的文件和目录**：
+- `package.json` - 项目配置和依赖管理
+- `tsconfig.json` - TypeScript 编译配置
+- `tsconfig.build.json` - 生产构建配置
+- `eslint.config.mjs` - ESLint 代码检查配置
+- `.prettierrc` - Prettier 代码格式化配置
+- `nest-cli.json` - NestJS CLI 配置
+- `src/` - 源代码目录
+  - `main.ts` - 应用入口文件
+  - `app.module.ts` - 根模块
+  - `app.controller.ts` - 示例控制器
+  - `app.service.ts` - 示例服务
+- `test/` - 测试文件目录
+- `dist/` - 编译输出目录（已生成）
+
+**验证结果**：
+- ✅ `pnpm run start:dev` - 服务器成功启动在 3000 端口
+- ✅ `pnpm run build` - 项目成功编译，无错误
+- ✅ `pnpm run lint` - 代码检查通过，无 lint 错误
+- ✅ 访问 `http://localhost:3000` - 返回默认响应
+
+**技术细节**：
+- NestJS 版本：^11.0.1
+- TypeScript 版本：^5.7.3
+- Node.js 模块系统：使用 ES modules (nodenext)
+- 代码风格：单引号、尾随逗号
+
+**下一步**：0.2 配置后端环境变量
+
+---
+
+### ✅ 0.2 配置后端环境变量（已完成）
+
+**完成时间**：2025年12月31日
+
+**完成内容**：
+1. 安装了 `@nestjs/config` 模块
+2. 创建了 `.env` 文件，包含所有必需的环境变量
+3. 创建了 `.env.example` 文件作为模板
+4. 在 `app.module.ts` 中配置了 `ConfigModule` 为全局模块
+5. 更新了 `main.ts` 使用 `ConfigService` 读取端口配置
+6. 更新了 `.gitignore` 忽略敏感文件
+
+**创建/修改的文件**：
+- `.env` - 环境变量文件（包含数据库、JWT、应用配置）
+- `.env.example` - 环境变量模板文件
+- `src/app.module.ts` - 添加了 ConfigModule 配置
+- `src/main.ts` - 使用 ConfigService 读取端口
+- `.gitignore` - 添加了 .env、dist、*.log 到忽略列表
+
+**环境变量配置**：
+- `NODE_ENV` - 运行环境（development/production）
+- `PORT` - 应用端口（默认 3000）
+- `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE` - 数据库连接配置
+- `JWT_SECRET`, `JWT_EXPIRES_IN` - JWT 认证配置
+- `OSS_*` - 文件存储配置（预留）
+
+**验证结果**：
+- ✅ 启动应用，能正确读取环境变量
+- ✅ 修改 `.env` 中的端口，应用在新端口启动
+- ✅ 删除 PORT 环境变量，应用使用默认端口 3000
+- ✅ 启动时显示正确的端口信息
+
+**技术细节**：
+- ConfigModule 配置为全局模块（`isGlobal: true`），所有模块可直接使用 ConfigService
+- 使用 `ConfigService.get<T>()` 方法获取类型安全的环境变量
+- `.env` 文件已添加到 `.gitignore`，不会提交到版本控制
+
+**下一步**：0.3 初始化前端项目
+
+---
+
