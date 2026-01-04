@@ -387,3 +387,66 @@
 
 ---
 
+### ✅ 1.4 实现用户注册 DTO 和验证（已完成）
+
+**完成时间**：2025年12月31日
+
+**完成内容**：
+1. 安装了 `class-validator` 和 `class-transformer` 包
+2. 创建了 `CreateUserDto`，包含用户注册所需字段
+3. 创建了 `UpdateUserProfileDto`，包含用户资料更新字段
+4. 使用 class-validator 添加了完整的验证规则
+5. 在 `main.ts` 中配置了全局验证管道
+
+**创建的文件和目录**：
+- `src/modules/users/dto/` - DTO 目录
+  - `create-user.dto.ts` - 用户注册 DTO
+  - `update-user-profile.dto.ts` - 用户资料更新 DTO
+
+**修改的文件**：
+- `src/main.ts` - 添加了全局验证管道配置
+- `package.json` - 添加了 `class-validator` 和 `class-transformer` 依赖
+
+**CreateUserDto 字段和验证规则**：
+- `username` - 字符串，必填，3-50 字符
+  - 使用 `@IsString()`, `@IsNotEmpty()`, `@MinLength(3)`, `@MaxLength(50)`
+- `email` - 邮箱格式，必填
+  - 使用 `@IsEmail()`, `@IsNotEmpty()`
+- `password` - 字符串，必填，最少 6 字符
+  - 使用 `@IsString()`, `@IsNotEmpty()`, `@MinLength(6)`
+
+**UpdateUserProfileDto 字段和验证规则**：
+- `height` - 数字，可选，范围 50-250（cm）
+  - 使用 `@IsNumber()`, `@IsOptional()`, `@Min(50)`, `@Max(250)`
+- `weight` - 数字，可选，范围 20-300（kg）
+  - 使用 `@IsNumber()`, `@IsOptional()`, `@Min(20)`, `@Max(300)`
+- `age` - 数字，可选，范围 1-150
+  - 使用 `@IsNumber()`, `@IsOptional()`, `@Min(1)`, `@Max(150)`
+- `gender` - 枚举值（male/female），可选
+  - 定义了 `Gender` 枚举
+  - 使用 `@IsEnum(Gender)`, `@IsOptional()`
+
+**全局验证管道配置**：
+- `whitelist: true` - 自动去除 DTO 中未定义的属性
+- `forbidNonWhitelisted: true` - 如果请求包含未定义的属性，返回 400 错误
+- `transform: true` - 自动将请求数据转换为 DTO 类型
+- `enableImplicitConversion: true` - 启用隐式类型转换（如字符串转数字）
+
+**技术细节**：
+- class-validator 版本：0.14.3
+- class-transformer 版本：0.5.1
+- 使用装饰器模式进行验证
+- 验证在控制器方法执行前自动进行
+- 验证失败时自动返回 400 错误和详细的错误信息
+- 支持类型转换，减少手动类型处理
+
+**验证结果**：
+- ✅ 发送无效的注册请求（如空字段、格式错误），正确返回 400 错误和验证错误信息
+- ✅ 发送有效的注册请求，成功通过验证
+- ✅ 发送包含用户资料的注册请求，成功通过验证
+- ✅ 发送超出范围的数值，正确返回验证错误
+
+**下一步**：1.5 实现密码加密功能
+
+---
+

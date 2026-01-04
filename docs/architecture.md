@@ -83,9 +83,19 @@
 - **作用**：应用入口文件，启动 NestJS 应用
 - **功能**：
   - 创建 NestJS 应用实例
+  - 配置全局验证管道（`ValidationPipe`）
   - 使用 `ConfigService` 读取环境变量中的端口配置
   - 监听端口（默认 3000，可通过 `.env` 中的 PORT 配置）
   - 启动 HTTP 服务器并输出启动信息
+- **全局验证管道配置**：
+  - `whitelist: true` - 自动去除 DTO 中未定义的属性
+  - `forbidNonWhitelisted: true` - 禁止未定义的属性，返回 400 错误
+  - `transform: true` - 自动转换类型（如字符串转数字）
+  - `enableImplicitConversion: true` - 启用隐式类型转换
+- **验证流程**：
+  - 所有请求在到达控制器前都会经过验证管道
+  - 使用 DTO 中的 `class-validator` 装饰器进行验证
+  - 验证失败时自动返回 400 错误和详细错误信息
 - **环境变量使用**：
   - 通过 `ConfigService.get<number>('PORT')` 获取端口
   - 如果未配置，使用默认值 3000
@@ -247,6 +257,37 @@
   - 返回统一的响应格式
 - **当前状态**：空实现，已准备好添加路由处理
 - **依赖注入**：注入 `UsersService` 用于业务逻辑处理
+
+#### `modules/users/dto/`
+- **作用**：存放用户模块的 DTO（数据传输对象）文件
+- **位置**：`src/modules/users/dto/`
+- **说明**：DTO 用于定义 API 请求和响应的数据结构，并包含验证规则
+
+#### `modules/users/dto/create-user.dto.ts`
+- **作用**：用户注册 DTO
+- **包含字段**：
+  - `username` - 用户名（3-50 字符，必填）
+  - `email` - 邮箱（邮箱格式，必填）
+  - `password` - 密码（最少 6 字符，必填）
+- **验证规则**：
+  - 使用 `class-validator` 装饰器进行验证
+  - 验证失败时自动返回 400 错误
+- **用途**：用于用户注册接口的请求数据验证
+
+#### `modules/users/dto/update-user-profile.dto.ts`
+- **作用**：用户资料更新 DTO
+- **包含字段**（全部可选）：
+  - `height` - 身高（50-250 cm）
+  - `weight` - 体重（20-300 kg）
+  - `age` - 年龄（1-150）
+  - `gender` - 性别（male/female 枚举）
+- **验证规则**：
+  - 所有字段都是可选的（`@IsOptional()`）
+  - 数值字段有范围限制（`@Min()`, `@Max()`）
+  - 性别字段使用枚举验证（`@IsEnum(Gender)`）
+- **包含内容**：
+  - `Gender` 枚举定义（MALE = 'male', FEMALE = 'female'）
+- **用途**：用于更新用户资料接口的请求数据验证
 
 ---
 
@@ -415,6 +456,27 @@
   const port = this.configService.get<number>('PORT');
   ```
 - 所有敏感配置（数据库密码、JWT密钥等）必须使用环境变量
+
+### DTO 和验证
+- DTO 文件放在模块的 `dto/` 目录
+- 使用 `class-validator` 装饰器添加验证规则
+- 在控制器方法中使用 DTO 作为参数类型：
+  ```typescript
+  @Post('register')
+  async register(@Body() createUserDto: CreateUserDto) {
+    // createUserDto 已经过验证
+  }
+  ```
+- 验证规则示例：
+  ```typescript
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(3)
+  @MaxLength(50)
+  username: string;
+  ```
+- 全局验证管道自动验证所有请求
+- 验证失败时返回 400 错误和详细错误信息
 
 ### 数据库操作
 - 使用 TypeORM Repository 进行数据库操作
