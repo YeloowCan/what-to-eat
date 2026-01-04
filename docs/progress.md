@@ -223,3 +223,50 @@
 
 ---
 
+## 阶段 1：后端基础
+
+### ✅ 1.1 配置 TypeORM 和数据库连接（已完成）
+
+**完成时间**：2025年12月31日
+
+**完成内容**：
+1. 安装了 `@nestjs/typeorm` 和 `typeorm` 包
+2. 在 `app.module.ts` 中配置了 TypeORM 模块
+3. 使用环境变量配置数据库连接参数
+4. 配置了异步数据库连接（使用 `forRootAsync`）
+
+**创建/修改的文件**：
+- `src/app.module.ts` - 添加了 `TypeOrmModule.forRootAsync()` 配置
+- `package.json` - 添加了 `@nestjs/typeorm` 和 `typeorm` 依赖
+
+**TypeORM 配置详情**：
+- 使用 `TypeOrmModule.forRootAsync()` 进行异步配置
+- 通过 `ConfigService` 注入读取环境变量
+- 数据库类型：PostgreSQL
+- 连接参数从环境变量读取：
+  - `DB_HOST` - 数据库主机（默认：localhost）
+  - `DB_PORT` - 数据库端口（默认：5432）
+  - `DB_USERNAME` - 数据库用户名（默认：postgres）
+  - `DB_PASSWORD` - 数据库密码（必需）
+  - `DB_DATABASE` - 数据库名称（默认：what_to_eat）
+- 开发环境配置：
+  - `synchronize: true` - 自动同步数据库结构（仅开发环境）
+  - `logging: true` - 启用 SQL 日志（仅开发环境）
+- 生产环境：`synchronize` 和 `logging` 均为 false，使用数据库迁移管理结构
+
+**技术细节**：
+- TypeORM 版本：0.3.28
+- @nestjs/typeorm 版本：11.0.0
+- 使用异步配置模式，确保 `ConfigService` 已初始化
+- 实体数组当前为空（`entities: []`），后续添加实体时会更新
+- 开发环境使用 `synchronize` 自动同步，生产环境必须使用迁移
+
+**验证测试**：
+- ⏳ 启动应用，应成功连接到数据库
+- ⏳ 检查日志，应无数据库连接错误
+- ⏳ 断开数据库，应用应显示明确的连接错误信息
+
+**下一步**：1.2 创建用户实体（User Entity）
+
+---
+

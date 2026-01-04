@@ -95,12 +95,20 @@
 - **当前配置**：
   - 导入：
     - `ConfigModule` - 环境变量配置模块（全局模块）
+    - `TypeOrmModule` - TypeORM 数据库模块
   - 控制器：AppController（示例）
   - 提供者：AppService（示例）
 - **ConfigModule 配置**：
   - `isGlobal: true` - 设置为全局模块，所有模块可直接注入 `ConfigService`
   - `envFilePath: '.env'` - 指定环境变量文件路径
-- **后续扩展**：将添加数据库模块、认证模块等
+- **TypeOrmModule 配置**：
+  - 使用 `forRootAsync()` 进行异步配置，确保 `ConfigService` 已初始化
+  - 数据库类型：PostgreSQL
+  - 连接参数从环境变量读取（`DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`）
+  - 开发环境启用 `synchronize`（自动同步数据库结构）和 `logging`（SQL 日志）
+  - 生产环境禁用 `synchronize`，使用数据库迁移管理结构
+  - 实体数组当前为空，后续添加实体时会更新
+- **后续扩展**：将添加业务模块（用户、菜品、饮食记录等）
 
 #### `app.controller.ts`
 - **作用**：示例控制器，演示 NestJS 路由处理
@@ -216,10 +224,13 @@
 
 ### 6. 数据库管理
 - 使用 PostgreSQL 作为关系型数据库
+- 使用 TypeORM 作为 ORM 框架，提供类型安全的数据库操作
 - 数据库初始化脚本位于 `database/init.sql`
 - 提供详细的设置文档和快速开始指南
 - 使用验证脚本确保数据库连接配置正确
-- 后续将使用 TypeORM 进行数据库操作和迁移管理
+- 开发环境使用 `synchronize` 自动同步数据库结构
+- 生产环境使用数据库迁移管理结构变更
+- TypeORM 配置通过环境变量管理，支持灵活的部署配置
 
 ---
 
@@ -247,6 +258,20 @@
   const port = this.configService.get<number>('PORT');
   ```
 - 所有敏感配置（数据库密码、JWT密钥等）必须使用环境变量
+
+### 数据库操作
+- 使用 TypeORM Repository 进行数据库操作
+- 在模块中使用 `TypeOrmModule.forFeature([Entity])` 注册实体
+- 在服务中注入 Repository：
+  ```typescript
+  constructor(
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+  ) {}
+  ```
+- 使用 Query Builder 进行复杂查询
+- 使用事务处理多个操作
+- 开发环境使用 `synchronize` 自动同步，生产环境使用迁移
 
 ### 测试
 - 单元测试：`pnpm run test`
