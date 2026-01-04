@@ -15,7 +15,11 @@
   - `build` - 编译 TypeScript 到 JavaScript
   - `lint` - 运行 ESLint 代码检查
   - `test` - 运行单元测试
+  - `db:verify` - 验证数据库连接（使用 `database/verify-connection.js`）
 - **包管理工具**：pnpm
+- **数据库相关依赖**：
+  - `pg` - PostgreSQL 客户端库（用于验证脚本）
+  - `dotenv` - 环境变量加载（用于验证脚本）
 
 #### `tsconfig.json`
 - **作用**：TypeScript 编译器配置
@@ -125,6 +129,56 @@
 
 ---
 
+### 数据库目录（database/）
+
+#### `database/`
+- **作用**：存放数据库相关的脚本和文档
+- **位置**：`server/database/`
+
+#### `database/init.sql`
+- **作用**：数据库初始化 SQL 脚本
+- **功能**：
+  - 创建 `what_to_eat` 数据库
+  - 设置数据库编码为 UTF-8
+  - 可选的用户创建和权限授予（已注释）
+- **使用方法**：
+  ```bash
+  psql -U postgres -f database/init.sql
+  ```
+  或在 psql 中执行：
+  ```sql
+  \i database/init.sql
+  ```
+
+#### `database/README.md`
+- **作用**：详细的数据库设置指南
+- **内容**：
+  - Windows 安装 PostgreSQL 的多种方法（安装程序、Chocolatey、Scoop）
+  - 创建数据库的多种方法（psql、pgAdmin、SQL 命令）
+  - 环境变量配置说明
+  - 数据库连接验证方法
+  - 常见问题解决方案和故障排除
+- **用途**：供开发者在首次设置数据库时参考
+
+#### `database/QUICKSTART.md`
+- **作用**：简化的快速开始指南
+- **内容**：最简化的设置步骤，适合快速上手
+- **用途**：有经验的开发者可以快速参考
+
+#### `database/verify-connection.js`
+- **作用**：数据库连接验证脚本
+- **功能**：
+  - 验证数据库连接配置是否正确
+  - 显示数据库信息（版本、编码、当前时间）
+  - 列出数据库中的表（如果有）
+  - 提供详细的错误提示和故障排除建议
+- **使用方法**：
+  ```bash
+  pnpm run db:verify
+  ```
+- **依赖**：需要安装 `pg` 和 `dotenv` 包
+- **环境变量**：从 `.env` 文件读取数据库连接配置
+
 ### 构建输出目录（dist/）
 
 #### `dist/`
@@ -159,6 +213,13 @@
 - ConfigModule 配置为全局模块，便于在所有模块中使用
 - 使用 `ConfigService` 提供类型安全的环境变量访问
 - `.env` 文件不提交到版本控制，使用 `.env.example` 作为模板
+
+### 6. 数据库管理
+- 使用 PostgreSQL 作为关系型数据库
+- 数据库初始化脚本位于 `database/init.sql`
+- 提供详细的设置文档和快速开始指南
+- 使用验证脚本确保数据库连接配置正确
+- 后续将使用 TypeORM 进行数据库操作和迁移管理
 
 ---
 
@@ -204,12 +265,13 @@
 - `NODE_ENV` - 运行环境：`development` 或 `production`
 - `PORT` - 应用监听端口（默认：3000）
 
-#### 数据库配置（后续步骤配置）
-- `DB_HOST` - 数据库主机地址
+#### 数据库配置（已配置）
+- `DB_HOST` - 数据库主机地址（默认：localhost）
 - `DB_PORT` - 数据库端口（PostgreSQL 默认：5432）
-- `DB_USERNAME` - 数据库用户名
-- `DB_PASSWORD` - 数据库密码
-- `DB_DATABASE` - 数据库名称
+- `DB_USERNAME` - 数据库用户名（默认：postgres）
+- `DB_PASSWORD` - 数据库密码（必需，安装 PostgreSQL 时设置）
+- `DB_DATABASE` - 数据库名称（默认：what_to_eat）
+- **注意**：数据库需要在运行应用前创建，参考 `database/README.md` 或 `database/QUICKSTART.md`
 
 #### JWT 配置（后续步骤配置）
 - `JWT_SECRET` - JWT 签名密钥（生产环境必须使用强密钥）
