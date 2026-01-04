@@ -242,6 +242,7 @@
   - 注入 `User` 实体的 Repository，用于数据库操作
   - 实现用户相关的业务逻辑方法
   - 提供密码加密和验证功能
+  - 实现用户注册功能
 - **密码加密方法**：
   - `hashPassword(password: string)`: 使用 bcrypt 对密码进行哈希加密
     - 使用 10 轮 salt（推荐值）
@@ -250,6 +251,13 @@
   - `validatePassword(password: string, hashedPassword: string)`: 验证密码
     - 使用 bcrypt.compare() 安全地比较密码
     - 返回 Promise<boolean>
+- **用户注册方法**：
+  - `create(createUserDto: CreateUserDto)`: 创建新用户
+    - 检查用户名和邮箱唯一性
+    - 加密密码
+    - 保存用户到数据库
+    - 返回用户信息（不含密码）
+    - 如果用户名或邮箱已存在，抛出 `ConflictException`
 - **依赖注入**：
   ```typescript
   @InjectRepository(User)
@@ -257,6 +265,8 @@
   ```
 - **依赖库**：
   - `bcrypt` - 密码哈希和验证库
+- **异常处理**：
+  - 使用 `ConflictException` 处理用户名和邮箱冲突
 
 #### `modules/users/users.controller.ts`
 - **作用**：用户控制器，处理用户相关的 HTTP 请求
@@ -511,6 +521,9 @@
 - 使用 Query Builder 进行复杂查询
 - 使用事务处理多个操作
 - 开发环境使用 `synchronize` 自动同步，生产环境使用迁移
+- 唯一性检查：使用 `findOne()` 方法检查字段唯一性
+- 创建实体：使用 `create()` 创建实体，`save()` 保存到数据库
+- 返回数据时排除敏感字段（如密码哈希）
 
 ### 实体定义
 - 实体类放在 `src/entities/` 目录
@@ -528,6 +541,21 @@
 - 运行迁移：`pnpm run migration:run`
 - 回滚迁移：`pnpm run migration:revert`
 - 每次数据库结构变更都要创建迁移文件
+
+### 错误处理
+- 使用 NestJS 内置异常类处理错误
+- 常见异常类型：
+  - `ConflictException` - 资源冲突（如用户名、邮箱已存在）
+  - `NotFoundException` - 资源不存在
+  - `BadRequestException` - 请求参数错误
+  - `UnauthorizedException` - 未授权
+- 异常使用示例：
+  ```typescript
+  if (existingUser) {
+    throw new ConflictException('用户名已存在');
+  }
+  ```
+- 异常会自动转换为 HTTP 状态码和错误响应
 
 ### 测试
 - 单元测试：`pnpm run test`

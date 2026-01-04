@@ -499,3 +499,66 @@
 
 ---
 
+### ✅ 1.6 实现用户注册服务逻辑（已完成）
+
+**完成时间**：2025年12月31日
+
+**完成内容**：
+1. 在 `UsersService` 中实现了 `create` 方法
+2. 实现了用户名和邮箱唯一性检查
+3. 实现了密码加密和用户保存逻辑
+4. 实现了返回用户信息时排除密码字段
+
+**修改的文件**：
+- `src/modules/users/users.service.ts` - 添加了 `create` 方法和相关导入
+
+**create 方法实现详情**：
+- **参数**：`createUserDto: CreateUserDto` - 用户注册数据
+- **返回值**：`Promise<Omit<User, 'passwordHash'>>` - 用户信息（不含密码）
+- **功能流程**：
+  1. 检查用户名是否已存在
+     - 使用 `userRepository.findOne()` 查询
+     - 如果存在，抛出 `ConflictException('用户名已存在')`
+  2. 检查邮箱是否已存在
+     - 使用 `userRepository.findOne()` 查询
+     - 如果存在，抛出 `ConflictException('邮箱已被注册')`
+  3. 加密密码
+     - 调用 `hashPassword()` 方法加密密码
+  4. 创建用户实体
+     - 使用 `userRepository.create()` 创建实体
+     - 设置 `profile: null`（初始为空）
+  5. 保存到数据库
+     - 使用 `userRepository.save()` 保存用户
+  6. 返回用户信息
+     - 使用解构排除 `passwordHash` 字段
+     - 返回不包含密码的用户信息
+
+**错误处理**：
+- 使用 `ConflictException` 处理冲突情况
+- 提供明确的错误信息：
+  - "用户名已存在" - 当用户名已存在时
+  - "邮箱已被注册" - 当邮箱已存在时
+
+**安全性**：
+- 密码以哈希形式存储，不存储明文
+- 返回的用户信息不包含密码哈希
+- 使用 bcrypt 加密，确保密码安全
+
+**技术细节**：
+- 使用 TypeORM Repository 进行数据库操作
+- 使用 `findOne()` 方法检查唯一性
+- 使用 `create()` 和 `save()` 方法创建和保存用户
+- 使用 TypeScript 的 `Omit` 类型排除密码字段
+- 异步方法，使用 async/await
+
+**验证结果**：
+- ✅ 注册新用户，成功创建并返回用户信息（不含密码）
+- ✅ 尝试注册已存在的用户名，正确抛出 `ConflictException` 异常
+- ✅ 尝试注册已存在的邮箱，正确抛出 `ConflictException` 异常
+- ✅ 检查数据库，密码为哈希值，不是明文
+- ✅ 返回的用户信息不包含 `passwordHash` 字段
+
+**下一步**：1.7 配置 API 版本控制
+
+---
+
