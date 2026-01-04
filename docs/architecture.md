@@ -241,12 +241,22 @@
   - 使用 `@Injectable()` 装饰器，可被依赖注入
   - 注入 `User` 实体的 Repository，用于数据库操作
   - 实现用户相关的业务逻辑方法
-- **当前状态**：空实现，已准备好添加业务逻辑
+  - 提供密码加密和验证功能
+- **密码加密方法**：
+  - `hashPassword(password: string)`: 使用 bcrypt 对密码进行哈希加密
+    - 使用 10 轮 salt（推荐值）
+    - 每次哈希结果不同（因为随机 salt）
+    - 返回 Promise<string>
+  - `validatePassword(password: string, hashedPassword: string)`: 验证密码
+    - 使用 bcrypt.compare() 安全地比较密码
+    - 返回 Promise<boolean>
 - **依赖注入**：
   ```typescript
   @InjectRepository(User)
   private readonly userRepository: Repository<User>
   ```
+- **依赖库**：
+  - `bcrypt` - 密码哈希和验证库
 
 #### `modules/users/users.controller.ts`
 - **作用**：用户控制器，处理用户相关的 HTTP 请求
@@ -477,6 +487,16 @@
   ```
 - 全局验证管道自动验证所有请求
 - 验证失败时返回 400 错误和详细错误信息
+
+### 密码安全
+- 使用 bcrypt 进行密码哈希和验证
+- 密码哈希方法：`hashPassword(password: string)`
+  - 使用 10 轮 salt（推荐值）
+  - 每次哈希结果不同（因为随机 salt）
+- 密码验证方法：`validatePassword(password: string, hashedPassword: string)`
+  - 使用 bcrypt.compare() 安全地比较密码
+- 密码以哈希形式存储，不存储明文
+- 使用足够的 salt 轮数，平衡安全性和性能
 
 ### 数据库操作
 - 使用 TypeORM Repository 进行数据库操作

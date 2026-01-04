@@ -450,3 +450,52 @@
 
 ---
 
+### ✅ 1.5 实现密码加密功能（已完成）
+
+**完成时间**：2025年12月31日
+
+**完成内容**：
+1. 安装了 `bcrypt` 和 `@types/bcrypt` 包
+2. 在 `UsersService` 中实现了密码哈希方法
+3. 在 `UsersService` 中实现了密码验证方法
+
+**修改的文件**：
+- `src/modules/users/users.service.ts` - 添加了密码加密和验证方法
+- `package.json` - 添加了 `bcrypt` 和 `@types/bcrypt` 依赖
+
+**密码加密方法详情**：
+- **hashPassword(password: string)**: 
+  - 使用 `bcrypt.hash()` 进行密码哈希
+  - salt 轮数：10（推荐值，平衡安全性和性能）
+  - 返回 Promise<string>，异步处理
+  - 每次哈希结果不同（因为随机 salt）
+  
+- **validatePassword(password: string, hashedPassword: string)**:
+  - 使用 `bcrypt.compare()` 验证密码
+  - 安全地比较明文密码和哈希密码
+  - 返回 Promise<boolean>，表示是否匹配
+
+**技术细节**：
+- bcrypt 版本：6.0.0
+- @types/bcrypt 版本：6.0.0
+- 使用 bcrypt 算法（专门设计用于密码存储）
+- 自动生成随机 salt（每次哈希结果不同）
+- 使用 10 轮 salt（推荐值）
+- 密码以哈希形式存储，不存储明文
+
+**安全特性**：
+- 使用 bcrypt 算法，适合密码存储
+- 自动生成随机 salt，防止彩虹表攻击
+- 使用足够的 salt 轮数，平衡安全性和性能
+- 密码以哈希形式存储，即使数据库泄露也无法直接获取明文密码
+
+**验证结果**：
+- ✅ 对同一密码进行两次哈希，结果不同（因为不同的 salt）
+- ✅ 使用哈希后的密码调用验证函数，正确返回 true
+- ✅ 使用错误密码调用验证函数，正确返回 false
+- ✅ 密码哈希和验证方法正常工作
+
+**下一步**：1.6 实现用户注册服务逻辑
+
+---
+
