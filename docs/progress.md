@@ -270,3 +270,69 @@
 
 ---
 
+### ✅ 1.2 创建用户实体（User Entity）（已完成）
+
+**完成时间**：2025年12月31日
+
+**完成内容**：
+1. 创建了 `User` 实体类，包含所有必需字段
+2. 添加了用户资料字段（使用 JSONB 类型的 `profile` 字段）
+3. 使用 TypeORM 装饰器定义实体和字段约束
+4. 设置了 `username` 和 `email` 为唯一字段
+5. 在 `app.module.ts` 中注册了 User 实体
+6. 配置了数据库迁移脚本和数据源
+
+**创建的文件和目录**：
+- `src/entities/` - 实体类目录
+  - `user.entity.ts` - User 实体类，包含：
+    - `UserProfile` 接口定义（height, weight, age, gender）
+    - `User` 实体类定义
+- `src/data-source.ts` - TypeORM 数据源配置文件（用于迁移）
+- `src/database/migrations/` - 数据库迁移文件目录
+
+**修改的文件**：
+- `src/app.module.ts` - 添加了 User 实体导入和注册
+- `package.json` - 添加了迁移脚本（`migration:generate`, `migration:run`, `migration:revert`）
+
+**User 实体字段详情**：
+- `id` - 主键，自增整数
+- `username` - 用户名，唯一，最大长度 50 字符
+- `email` - 邮箱，唯一，最大长度 100 字符
+- `passwordHash` - 密码哈希值，数据库列名 `password_hash`
+- `profile` - 用户资料（JSONB 类型），包含：
+  - `height` - 身高（cm），可选
+  - `weight` - 体重（kg），可选
+  - `age` - 年龄，可选
+  - `gender` - 性别（'male' | 'female'），可选
+- `createdAt` - 创建时间，自动管理，数据库列名 `created_at`
+- `updatedAt` - 更新时间，自动管理，数据库列名 `updated_at`
+
+**技术细节**：
+- 使用 TypeORM 装饰器：`@Entity`, `@Column`, `@PrimaryGeneratedColumn`, `@CreateDateColumn`, `@UpdateDateColumn`
+- 数据库表名：`users`（snake_case）
+- 数据库列名：使用 snake_case（`password_hash`, `created_at`, `updated_at`）
+- 唯一约束：`username` 和 `email` 字段设置了 `unique: true`
+- JSONB 类型：`profile` 字段使用 PostgreSQL 的 JSONB 类型存储用户资料
+- 数据源配置：创建了独立的 `data-source.ts` 用于迁移，禁用 `synchronize`
+
+**迁移配置**：
+- 迁移文件位置：`src/database/migrations/*{.ts,.js}`
+- 迁移脚本：
+  - `migration:generate` - 生成迁移文件
+  - `migration:run` - 运行迁移
+  - `migration:revert` - 回滚迁移
+- 使用 `ts-node` 运行 TypeScript 迁移文件
+
+**验证结果**：
+- ✅ 运行 `pnpm run migration:generate`，成功生成迁移文件
+- ✅ 运行 `pnpm run migration:run`，成功在数据库中创建 `users` 表
+- ✅ 表结构包含所有定义的字段
+- ✅ `username` 和 `email` 字段有唯一约束
+- ✅ `profile` 字段为 JSONB 类型
+- ✅ 尝试插入重复的 `username` 或 `email`，正确抛出唯一约束错误
+- ✅ 插入包含用户资料的数据，成功保存
+
+**下一步**：1.3 创建用户模块基础结构
+
+---
+

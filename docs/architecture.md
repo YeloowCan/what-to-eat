@@ -107,7 +107,7 @@
   - 连接参数从环境变量读取（`DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`）
   - 开发环境启用 `synchronize`（自动同步数据库结构）和 `logging`（SQL 日志）
   - 生产环境禁用 `synchronize`，使用数据库迁移管理结构
-  - 实体数组当前为空，后续添加实体时会更新
+  - 实体数组：`[User]`（已注册 User 实体）
 - **后续扩展**：将添加业务模块（用户、菜品、饮食记录等）
 
 #### `app.controller.ts`
@@ -123,6 +123,75 @@
 #### `app.controller.spec.ts`
 - **作用**：AppController 的单元测试文件
 - **测试框架**：Jest
+
+---
+
+### 实体目录（src/entities/）
+
+#### `entities/`
+- **作用**：存放 TypeORM 实体类定义
+- **位置**：`src/entities/`
+- **说明**：每个实体类对应数据库中的一个表
+
+#### `entities/user.entity.ts`
+- **作用**：用户实体类定义
+- **对应表**：`users`
+- **包含内容**：
+  - `UserProfile` 接口 - 用户资料类型定义
+    - `height?: number` - 身高（cm）
+    - `weight?: number` - 体重（kg）
+    - `age?: number` - 年龄
+    - `gender?: 'male' | 'female'` - 性别
+  - `User` 实体类 - 用户实体
+    - `id` - 主键，自增整数
+    - `username` - 用户名，唯一，最大 50 字符
+    - `email` - 邮箱，唯一，最大 100 字符
+    - `passwordHash` - 密码哈希值（数据库列名：`password_hash`）
+    - `profile` - 用户资料（JSONB 类型，可为空）
+    - `createdAt` - 创建时间（数据库列名：`created_at`）
+    - `updatedAt` - 更新时间（数据库列名：`updated_at`）
+- **约束**：
+  - `username` 和 `email` 字段设置了唯一约束
+  - `profile` 字段使用 PostgreSQL JSONB 类型
+- **用途**：用于用户认证、健康分析、个性化推荐等功能
+
+---
+
+### 数据源配置（src/data-source.ts）
+
+#### `data-source.ts`
+- **作用**：TypeORM 数据源配置文件，用于数据库迁移
+- **功能**：
+  - 定义数据库连接配置
+  - 指定实体和迁移文件位置
+  - 提供迁移命令使用的数据源
+- **配置内容**：
+  - 数据库连接参数（从环境变量读取）
+  - 实体列表：`[User]`
+  - 迁移文件路径：`src/database/migrations/*{.ts,.js}`
+  - `synchronize: false` - 迁移时禁用自动同步
+- **使用场景**：
+  - 运行迁移命令时使用
+  - 生成迁移文件时使用
+  - 回滚迁移时使用
+- **注意**：此文件独立于 `app.module.ts` 中的 TypeORM 配置，专门用于迁移操作
+
+---
+
+### 迁移目录（src/database/migrations/）
+
+#### `database/migrations/`
+- **作用**：存放数据库迁移文件
+- **位置**：`src/database/migrations/`
+- **文件命名**：`{timestamp}-{name}.ts`
+- **用途**：
+  - 管理数据库结构变更
+  - 版本控制数据库结构
+  - 支持数据库结构回滚
+- **迁移脚本**（在 `package.json` 中）：
+  - `migration:generate` - 生成迁移文件
+  - `migration:run` - 运行迁移
+  - `migration:revert` - 回滚迁移
 
 ---
 
@@ -231,6 +300,10 @@
 - 开发环境使用 `synchronize` 自动同步数据库结构
 - 生产环境使用数据库迁移管理结构变更
 - TypeORM 配置通过环境变量管理，支持灵活的部署配置
+- 实体类定义在 `src/entities/` 目录
+- 使用 JSONB 类型存储复杂数据结构（如用户资料）
+- 数据库列名使用 snake_case，实体属性使用 camelCase
+- 迁移文件使用独立的数据源配置（`data-source.ts`）
 
 ---
 
@@ -272,6 +345,23 @@
 - 使用 Query Builder 进行复杂查询
 - 使用事务处理多个操作
 - 开发环境使用 `synchronize` 自动同步，生产环境使用迁移
+
+### 实体定义
+- 实体类放在 `src/entities/` 目录
+- 使用 TypeORM 装饰器定义实体和字段
+- 表名使用 snake_case（如 `users`）
+- 数据库列名使用 snake_case（如 `password_hash`, `created_at`）
+- 实体属性使用 camelCase（如 `passwordHash`, `createdAt`）
+- 使用 JSONB 类型存储复杂数据结构
+- 唯一约束使用 `@Column({ unique: true })`
+
+### 数据库迁移
+- 迁移文件放在 `src/database/migrations/` 目录
+- 使用 `data-source.ts` 作为迁移数据源
+- 生成迁移：`pnpm run migration:generate -- src/database/migrations/MigrationName`
+- 运行迁移：`pnpm run migration:run`
+- 回滚迁移：`pnpm run migration:revert`
+- 每次数据库结构变更都要创建迁移文件
 
 ### 测试
 - 单元测试：`pnpm run test`
