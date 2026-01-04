@@ -108,7 +108,9 @@
   - 开发环境启用 `synchronize`（自动同步数据库结构）和 `logging`（SQL 日志）
   - 生产环境禁用 `synchronize`，使用数据库迁移管理结构
   - 实体数组：`[User]`（已注册 User 实体）
-- **后续扩展**：将添加业务模块（用户、菜品、饮食记录等）
+- **已导入模块**：
+  - `UsersModule` - 用户模块
+- **后续扩展**：将添加更多业务模块（菜品、饮食记录、健康分析等）
 
 #### `app.controller.ts`
 - **作用**：示例控制器，演示 NestJS 路由处理
@@ -195,6 +197,59 @@
 
 ---
 
+### 业务模块目录（src/modules/）
+
+#### `modules/`
+- **作用**：存放业务模块代码
+- **位置**：`src/modules/`
+- **说明**：每个业务功能对应一个模块目录，包含模块、控制器、服务等文件
+
+#### `modules/users/`
+- **作用**：用户模块目录
+- **位置**：`src/modules/users/`
+- **包含文件**：
+  - `users.module.ts` - 用户模块定义
+  - `users.service.ts` - 用户服务
+  - `users.controller.ts` - 用户控制器
+
+#### `modules/users/users.module.ts`
+- **作用**：用户模块定义文件
+- **功能**：
+  - 使用 `@Module` 装饰器定义模块
+  - 使用 `TypeOrmModule.forFeature([User])` 注册 TypeORM 特性模块
+  - 注册控制器和服务
+  - 导出服务供其他模块使用
+- **配置内容**：
+  - `imports: [TypeOrmModule.forFeature([User])]` - 注册 User 实体的 Repository
+  - `controllers: [UsersController]` - 注册控制器
+  - `providers: [UsersService]` - 注册服务
+  - `exports: [UsersService]` - 导出服务（供其他模块使用）
+
+#### `modules/users/users.service.ts`
+- **作用**：用户服务，包含用户相关的业务逻辑
+- **功能**：
+  - 使用 `@Injectable()` 装饰器，可被依赖注入
+  - 注入 `User` 实体的 Repository，用于数据库操作
+  - 实现用户相关的业务逻辑方法
+- **当前状态**：空实现，已准备好添加业务逻辑
+- **依赖注入**：
+  ```typescript
+  @InjectRepository(User)
+  private readonly userRepository: Repository<User>
+  ```
+
+#### `modules/users/users.controller.ts`
+- **作用**：用户控制器，处理用户相关的 HTTP 请求
+- **路由前缀**：`/users`（由 `@Controller('users')` 定义）
+- **功能**：
+  - 处理用户相关的 HTTP 请求和响应
+  - 调用服务层处理业务逻辑
+  - 返回统一的响应格式
+- **当前状态**：空实现，已准备好添加路由处理
+- **依赖注入**：注入 `UsersService` 用于业务逻辑处理
+
+---
+
 ### 测试目录（test/）
 
 #### `app.e2e-spec.ts`
@@ -270,6 +325,10 @@
 ### 1. 模块化设计
 - 使用 NestJS 的模块系统组织代码
 - 每个功能模块独立，便于维护和测试
+- 业务模块放在 `src/modules/` 目录
+- 每个模块包含：module、controller、service 文件
+- 使用 `TypeOrmModule.forFeature()` 注册实体 Repository
+- 服务可以导出供其他模块使用
 
 ### 2. 分层架构
 - **Controller 层**：处理 HTTP 请求和响应
@@ -310,10 +369,35 @@
 ## 后续开发指南
 
 ### 添加新模块
-1. 使用 `nest g module <module-name>` 生成模块
-2. 使用 `nest g controller <controller-name>` 生成控制器
-3. 使用 `nest g service <service-name>` 生成服务
-4. 在模块中注册控制器和服务
+1. 在 `src/modules/` 目录下创建模块目录（如 `users/`）
+2. 创建模块文件 `*.module.ts`：
+   ```typescript
+   @Module({
+     imports: [TypeOrmModule.forFeature([Entity])], // 注册实体
+     controllers: [Controller],
+     providers: [Service],
+     exports: [Service], // 可选：导出服务供其他模块使用
+   })
+   export class ModuleName {}
+   ```
+3. 创建服务文件 `*.service.ts`：
+   ```typescript
+   @Injectable()
+   export class ServiceName {
+     constructor(
+       @InjectRepository(Entity)
+       private readonly repository: Repository<Entity>,
+     ) {}
+   }
+   ```
+4. 创建控制器文件 `*.controller.ts`：
+   ```typescript
+   @Controller('route-prefix')
+   export class ControllerName {
+     constructor(private readonly service: ServiceName) {}
+   }
+   ```
+5. 在 `app.module.ts` 的 `imports` 数组中导入新模块
 
 ### 代码规范
 - 遵循 `.cursorrules` 中的规范

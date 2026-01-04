@@ -336,3 +336,54 @@
 
 ---
 
+### ✅ 1.3 创建用户模块基础结构（已完成）
+
+**完成时间**：2025年12月31日
+
+**完成内容**：
+1. 创建了 `users` 模块目录结构
+2. 创建了 `users.module.ts`，注册了 TypeORM 特性模块
+3. 创建了 `users.service.ts`（空实现）
+4. 创建了 `users.controller.ts`（空实现）
+5. 在 `app.module.ts` 中导入了 `UsersModule`
+
+**创建的文件和目录**：
+- `src/modules/` - 业务模块目录
+  - `users/` - 用户模块目录
+    - `users.module.ts` - 用户模块定义
+    - `users.service.ts` - 用户服务（空实现）
+    - `users.controller.ts` - 用户控制器（空实现）
+
+**修改的文件**：
+- `src/app.module.ts` - 在 `imports` 数组中添加了 `UsersModule`
+
+**模块配置详情**：
+- **UsersModule**：
+  - 使用 `TypeOrmModule.forFeature([User])` 注册 TypeORM 特性模块
+  - 注册了 `UsersController` 和 `UsersService`
+  - 导出了 `UsersService`（供其他模块使用）
+- **UsersService**：
+  - 使用 `@Injectable()` 装饰器
+  - 注入了 `User` 实体的 Repository
+  - 当前为空实现，已准备好添加业务逻辑
+- **UsersController**：
+  - 使用 `@Controller('users')` 装饰器，路由前缀为 `/users`
+  - 注入了 `UsersService`
+  - 当前为空实现，已准备好添加路由处理
+
+**技术细节**：
+- 模块结构遵循 NestJS 最佳实践
+- 使用依赖注入模式
+- TypeORM 特性模块允许在服务中使用 Repository
+- 服务导出使其他模块可以复用用户服务
+- 控制器路由前缀为 `/users`
+
+**验证结果**：
+- ✅ 启动应用，无模块导入错误
+- ✅ 检查日志，无错误信息
+- ✅ 访问 `/users` 路由，返回 404（路由未实现，符合预期）
+
+**下一步**：1.4 实现用户注册 DTO 和验证
+
+---
+
