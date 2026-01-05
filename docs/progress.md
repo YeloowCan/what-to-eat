@@ -1227,3 +1227,109 @@ getProfile(@CurrentUser() user: JwtPayload) {
 
 ---
 
+### ✅ 1.17 实现更新用户资料 API（已完成）
+
+**完成时间**：2025年12月31日
+
+**完成内容**：
+1. 在 `users.service.ts` 中添加了 `updateProfile` 方法，用于更新用户资料
+2. 在 `users.controller.ts` 中创建了 `POST /v1/users/profile` 端点（使用 POST 而非 PUT）
+3. 使用 JWT 守卫保护路由
+4. 使用 `@CurrentUser()` 装饰器获取当前登录用户信息
+5. 支持部分更新（只更新提供的字段）
+6. 添加了完整的 Swagger 文档（包括 Bearer 认证支持）
+
+**修改的文件**：
+- `src/modules/users/users.service.ts` - 添加了 `updateProfile` 方法
+- `src/modules/users/users.controller.ts` - 添加了 `updateProfile` 端点
+
+**API 端点详情**：
+- **路径**：`POST /v1/users/profile`
+- **认证**：需要 JWT token（Bearer token）
+- **请求头**：`Authorization: Bearer <token>`
+- **请求体**：`UpdateUserProfileDto`（所有字段可选）
+  ```json
+  {
+    "height": 175,
+    "weight": 70,
+    "age": 25,
+    "gender": "male"
+  }
+  ```
+- **成功响应（200）**：
+  ```json
+  {
+    "success": true,
+    "data": {
+      "id": 1,
+      "username": "zhangsan",
+      "email": "zhangsan@example.com",
+      "profile": {
+        "height": 175,
+        "weight": 70,
+        "age": 25,
+        "gender": "male"
+      },
+      "createdAt": "2025-12-31T12:00:00.000Z",
+      "updatedAt": "2025-12-31T12:00:00.000Z"
+    },
+    "message": "更新成功"
+  }
+  ```
+- **错误响应（400）**：请求参数验证失败（VALIDATION_001）
+- **错误响应（401）**：未授权，需要登录（AUTH_001）
+- **错误响应（404）**：用户不存在（USER_001）
+
+**服务方法详情**：
+- **updateProfile(id: number, updateUserProfileDto: UpdateUserProfileDto)**: 更新用户资料
+  - 根据用户 ID 查找用户
+  - 如果用户不存在，抛出 `NotFoundException`
+  - 支持部分更新：如果用户已有 profile，则合并；否则创建新对象
+  - 只更新提供的字段，未提供的字段保持不变
+  - 保存更新后的用户信息到数据库
+  - 返回更新后的用户信息（不含密码）
+
+**控制器方法详情**：
+- **updateProfile(@CurrentUser() jwtPayload: JwtPayload, @Body() updateUserProfileDto: UpdateUserProfileDto)**: 更新当前用户资料
+  - 使用 `@UseGuards(JwtAuthGuard)` 保护路由
+  - 使用 `@Post('profile')` 定义路由（使用 POST 方法）
+  - 使用 `@CurrentUser()` 装饰器获取当前登录用户的 JWT payload
+  - 从 JWT payload 中提取用户 ID（`jwtPayload.sub`）
+  - 调用 `usersService.updateProfile()` 更新用户资料
+  - 返回统一响应格式
+
+**更新逻辑**：
+- 支持部分更新：只更新请求体中提供的字段
+- 如果用户已有 profile，则合并新旧数据
+- 如果用户没有 profile，则创建新的 profile 对象
+- 未提供的字段保持不变
+
+**Swagger 文档**：
+- 使用 `@ApiBearerAuth()` 添加 Bearer 认证支持
+- 使用 `@ApiOperation` 添加接口描述
+- 使用 `@ApiBody` 说明请求体（UpdateUserProfileDto）
+- 使用 `@ApiResponse` 定义成功响应（200）和错误响应（400、401、404）
+- 包含完整的响应示例和字段说明
+- 支持在 Swagger UI 中直接测试（需要先登录获取 token）
+
+**技术细节**：
+- 使用 `@UseGuards(JwtAuthGuard)` 保护路由，确保只有认证用户才能访问
+- 使用 `@CurrentUser()` 装饰器简化获取当前用户的代码
+- 使用 `@Post('profile')` 而非 `@Put('profile')`（根据需求使用 POST 方法）
+- 支持部分更新，只更新提供的字段
+- 返回的用户信息不包含 `passwordHash` 字段（服务层已处理）
+- 如果用户不存在，抛出 `NotFoundException`，全局异常过滤器会统一处理
+- Profile 数据使用 JSONB 类型存储，支持灵活的数据结构
+
+**验证结果**：
+- ✅ 使用有效 token 更新资料，成功更新
+- ✅ 更新后查询用户信息，显示新资料
+- ✅ 验证规则正常工作（如年龄范围、身高范围等）
+- ✅ 不使用 token 访问，返回 401 错误和统一错误格式
+- ✅ 部分更新功能正常（只更新提供的字段）
+- ✅ 在 Swagger UI 中测试，能成功更新用户资料（需要先登录获取 token）
+
+**下一步**：阶段 1 后端基础已完成，可以开始阶段 2 前端基础
+
+---
+

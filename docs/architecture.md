@@ -591,6 +591,14 @@
     - 使用 TypeORM 的 `findOne()` 方法查询数据库
     - 返回用户信息（不含密码）或 `null`
     - 如果用户不存在，返回 `null`
+- **用户资料更新方法**：
+  - `updateProfile(id: number, updateUserProfileDto: UpdateUserProfileDto)`: 更新用户资料
+    - 根据用户 ID 查找用户
+    - 如果用户不存在，抛出 `NotFoundException`
+    - 支持部分更新：如果用户已有 profile，则合并；否则创建新对象
+    - 只更新提供的字段，未提供的字段保持不变
+    - 保存更新后的用户信息到数据库
+    - 返回更新后的用户信息（不含密码）
 - **用户注册方法**：
   - `create(createUserDto: CreateUserDto)`: 创建新用户
     - 检查用户名和邮箱唯一性
@@ -607,6 +615,7 @@
   - `bcrypt` - 密码哈希和验证库
 - **异常处理**：
   - 使用 `ConflictException` 处理用户名和邮箱冲突
+  - 使用 `NotFoundException` 处理用户不存在的情况
 
 #### `modules/users/users.controller.ts`
 - **作用**：用户控制器，处理用户相关的 HTTP 请求
@@ -632,6 +641,16 @@
     - 如果用户不存在，抛出 `NotFoundException`
     - 返回 `SuccessResponse<Omit<User, 'passwordHash'>>` 格式
     - 成功响应包含用户完整信息（包括 profile 字段）
+  - `POST /v1/users/profile` - 更新当前用户资料
+    - 使用 `@Post('profile')` 装饰器定义路由（使用 POST 方法）
+    - 使用 `@UseGuards(JwtAuthGuard)` 保护路由，需要 JWT 认证
+    - 使用 `@CurrentUser()` 装饰器获取当前登录用户的 JWT payload
+    - 接收 `UpdateUserProfileDto` 作为请求体（所有字段可选）
+    - 从 JWT payload 中提取用户 ID（`jwtPayload.sub`）
+    - 调用 `usersService.updateProfile()` 更新用户资料
+    - 支持部分更新：只更新提供的字段，未提供的字段保持不变
+    - 返回 `SuccessResponse<Omit<User, 'passwordHash'>>` 格式
+    - 成功响应包含更新后的用户信息（包括 profile 字段）
 - **Swagger 文档**：
   - 使用 `@ApiTags('users')` 装饰器将控制器分组到 users 标签
   - 使用 `@ApiOperation` 添加接口描述

@@ -1,9 +1,14 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from '../../entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
 
 @Injectable()
 export class UsersService {
@@ -137,6 +142,46 @@ export class UsersService {
     // 返回用户信息（不含密码）
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash: _, ...userWithoutPassword } = savedUser;
+    return userWithoutPassword;
+  }
+
+  /**
+   * 更新用户资料
+   * 根据用户 ID 更新用户的资料信息（身高、体重、年龄、性别）
+   * @param id 用户 ID
+   * @param updateUserProfileDto 用户资料更新数据
+   * @returns 更新后的用户信息（不含密码）
+   */
+  async updateProfile(
+    id: number,
+    updateUserProfileDto: UpdateUserProfileDto,
+  ): Promise<Omit<User, 'passwordHash'>> {
+    // 查找用户
+    const user = await this.userRepository.findOne({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new NotFoundException('用户不存在');
+    }
+
+    // 构建新的 profile 对象
+    // 如果用户已有 profile，则合并；否则创建新对象
+    const currentProfile = user.profile || {};
+    const newProfile = {
+      ...currentProfile,
+      ...updateUserProfileDto,
+    };
+
+    // 更新用户资料
+    user.profile = newProfile;
+
+    // 保存到数据库
+    const updatedUser = await this.userRepository.save(user);
+
+    // 返回用户信息（不含密码）
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash: _, ...userWithoutPassword } = updatedUser;
     return userWithoutPassword;
   }
 }
