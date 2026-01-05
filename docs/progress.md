@@ -935,3 +935,95 @@ JWT_EXPIRES_IN=7d
 
 ---
 
+### ✅ 1.13 实现用户登录 API 端点（已完成）
+
+**完成时间**：2025年12月31日
+
+**完成内容**：
+1. 创建了 `auth` 模块（auth.module.ts）
+2. 创建了登录 DTO（login.dto.ts）
+3. 创建了 auth.service.ts，实现登录逻辑
+4. 创建了 auth.controller.ts，实现登录端点
+5. 添加了完整的 Swagger 文档装饰器
+6. 修复了 JWT 模块的类型错误
+
+**修改的文件**：
+- `src/modules/auth/auth.module.ts` - 新建：Auth 模块
+- `src/modules/auth/auth.service.ts` - 新建：认证服务
+- `src/modules/auth/auth.controller.ts` - 新建：认证控制器
+- `src/modules/auth/dto/login.dto.ts` - 新建：登录 DTO
+- `src/modules/auth/jwt/jwt.module.ts` - 修改：修复类型错误
+- `src/app.module.ts` - 修改：导入 AuthModule
+- `src/main.ts` - 修改：添加 auth 标签到 Swagger，添加 Bearer 认证支持
+
+**API 端点详情**：
+- **路径**：`POST /v1/auth/login`
+- **请求体**：`LoginDto`（usernameOrEmail, password）
+- **成功响应（200）**：
+  ```json
+  {
+    "success": true,
+    "data": {
+      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "user": {
+        "id": 1,
+        "username": "zhangsan",
+        "email": "zhangsan@example.com",
+        "profile": null,
+        "createdAt": "2025-12-31T12:00:00.000Z",
+        "updatedAt": "2025-12-31T12:00:00.000Z"
+      }
+    },
+    "message": "登录成功"
+  }
+  ```
+- **错误响应（401）**：用户名或密码错误（AUTH_004）
+- **错误响应（400）**：请求参数验证失败（VALIDATION_001）
+
+**登录流程**：
+1. 接收登录请求（用户名或邮箱、密码）
+2. 调用 `usersService.validateUser()` 验证用户凭据
+3. 如果验证失败，抛出 `UnauthorizedException`
+4. 如果验证成功，构建 JWT payload（包含用户 ID、用户名、邮箱）
+5. 使用 `jwtService.sign()` 生成 JWT token
+6. 返回 token 和用户信息
+
+**功能特性**：
+1. **统一响应格式**：使用 `SuccessResponse` 接口
+2. **类型安全**：使用 TypeScript 接口和类型
+3. **自动验证**：ValidationPipe 自动验证请求参数
+4. **错误处理**：全局异常过滤器统一处理错误
+5. **API 文档**：Swagger 自动生成文档，支持在线测试
+6. **安全性**：返回的 token 可用于后续认证
+7. **灵活登录**：支持用户名或邮箱登录
+
+**技术细节**：
+- 使用 `@Post('login')` 定义路由
+- 使用 `@HttpCode(HttpStatus.OK)` 返回 200 状态码
+- 使用 `@Body()` 装饰器接收请求体
+- 调用 `authService.login()` 处理登录逻辑
+- 使用 `jwtService.sign()` 生成 JWT token
+- 返回类型为 `Promise<SuccessResponse<LoginResponseData>>`
+- 修复了 JWT 模块中 `expiresIn` 的类型错误（使用 `as any` 类型断言）
+
+**Swagger 文档**：
+- `@ApiTags('auth')`：将控制器分组到 auth 标签
+- `@ApiOperation`：接口描述和说明
+- `@ApiBody`：请求体说明
+- `@ApiResponse`：成功响应（200）和错误响应（401、400）的详细文档
+- 包含示例值和字段说明
+- 支持在 Swagger UI 中直接测试
+- 添加了 Bearer 认证支持（`addBearerAuth()`）
+
+**验证结果**：
+- ✅ 使用正确凭据登录，返回 200 状态码和包含 token 的响应
+- ✅ 使用错误密码登录，返回 401 未授权错误和统一错误格式
+- ✅ 使用不存在的用户登录，返回 401 未授权错误和统一错误格式
+- ✅ 在 Swagger UI 中测试，能成功登录
+- ✅ JWT token 正确生成，包含用户信息
+- ✅ 类型错误已修复，应用正常启动
+
+**下一步**：1.14 创建 JWT 认证守卫
+
+---
+

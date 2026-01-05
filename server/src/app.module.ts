@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { User } from './entities/user.entity';
 import { UsersModule } from './modules/users/users.module';
 import { JwtModule } from './modules/auth/jwt/jwt.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { JwtModule } from './modules/auth/jwt/jwt.module';
     }),
     UsersModule,
     JwtModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

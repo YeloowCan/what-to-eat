@@ -9,12 +9,15 @@ import { JwtStrategy } from './jwt.strategy';
     PassportModule.register({ defaultStrategy: 'jwt' }),
     NestJwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET', 'your-secret-key'),
-        signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '7d'),
-        },
-      }),
+      useFactory: (configService: ConfigService) => {
+        const expiresIn = configService.get<string>('JWT_EXPIRES_IN', '7d');
+        return {
+          secret: configService.get<string>('JWT_SECRET', 'your-secret-key'),
+          signOptions: {
+            expiresIn: expiresIn as any, // JWT accepts string like '7d', '1h', etc.
+          },
+        };
+      },
       inject: [ConfigService],
     }),
   ],

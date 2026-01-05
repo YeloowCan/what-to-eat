@@ -332,6 +332,10 @@
 - **位置**：`src/modules/auth/`
 - **包含内容**：
   - `jwt/` - JWT 认证相关文件
+  - `auth.module.ts` - 认证模块定义
+  - `auth.service.ts` - 认证服务
+  - `auth.controller.ts` - 认证控制器
+  - `dto/` - 认证相关 DTO
 
 #### `modules/auth/jwt/jwt.module.ts`
 - **作用**：JWT 模块配置
@@ -377,6 +381,85 @@
 - **使用场景**：
   - 在需要认证的控制器或路由中使用 `@UseGuards(JwtAuthGuard)`
   - 通过 `@Request()` 装饰器获取验证后的用户信息
+- **类型处理**：
+  - `expiresIn` 使用 `as any` 类型断言，因为 JWT 库支持字符串格式（如 '7d'），但 TypeScript 类型定义较严格
+
+#### `modules/auth/auth.module.ts`
+- **作用**：认证模块定义文件
+- **功能**：
+  - 使用 `@Module` 装饰器定义模块
+  - 导入 `UsersModule` 和 `JwtModule`
+  - 注册认证控制器和服务
+  - 导出 `AuthService` 供其他模块使用
+- **配置内容**：
+  - `imports: [UsersModule, JwtModule]` - 导入用户模块和 JWT 模块
+  - `controllers: [AuthController]` - 注册认证控制器
+  - `providers: [AuthService]` - 注册认证服务
+  - `exports: [AuthService]` - 导出服务（供其他模块使用）
+
+#### `modules/auth/auth.service.ts`
+- **作用**：认证服务，处理用户登录逻辑
+- **功能**：
+  - 使用 `@Injectable()` 装饰器，可被依赖注入
+  - 注入 `UsersService` 用于验证用户凭据
+  - 注入 `JwtService` 用于生成 JWT token
+  - 实现用户登录功能
+- **登录方法**：
+  - `login(loginDto: LoginDto)`: 用户登录
+    - 调用 `usersService.validateUser()` 验证用户凭据
+    - 如果验证失败，抛出 `UnauthorizedException`
+    - 如果验证成功，构建 JWT payload
+    - 使用 `jwtService.sign()` 生成 JWT token
+    - 返回 token 和用户信息（不含密码）
+- **依赖注入**：
+  ```typescript
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
+  ) {}
+  ```
+- **异常处理**：
+  - 使用 `UnauthorizedException` 处理登录失败
+
+#### `modules/auth/auth.controller.ts`
+- **作用**：认证控制器，处理认证相关的 HTTP 请求
+- **路由前缀**：`/auth`（由 `@Controller('auth')` 定义）
+- **功能**：
+  - 处理认证相关的 HTTP 请求和响应
+  - 调用服务层处理业务逻辑
+  - 返回统一的响应格式
+- **API 端点**：
+  - `POST /v1/auth/login` - 用户登录
+    - 使用 `@Post('login')` 装饰器定义路由
+    - 使用 `@HttpCode(HttpStatus.OK)` 返回 200 状态码
+    - 接收 `LoginDto` 作为请求体
+    - 调用 `authService.login()` 处理登录逻辑
+    - 返回 `SuccessResponse<LoginResponseData>` 格式
+    - 成功响应包含 JWT token 和用户信息
+- **Swagger 文档**：
+  - 使用 `@ApiTags('auth')` 装饰器将控制器分组到 auth 标签
+  - 使用 `@ApiOperation` 添加接口描述
+  - 使用 `@ApiBody` 说明请求体
+  - 使用 `@ApiResponse` 定义成功和错误响应格式
+  - 在 Swagger UI 中显示为独立的接口组，支持在线测试
+- **响应格式**：
+  - 成功响应：`{ success: true, data: { accessToken, user }, message: string }`
+  - 错误响应：由全局异常过滤器统一处理
+- **依赖注入**：注入 `AuthService` 用于业务逻辑处理
+
+#### `modules/auth/dto/login.dto.ts`
+- **作用**：用户登录 DTO
+- **包含字段**：
+  - `usernameOrEmail` - 用户名或邮箱（必填）
+  - `password` - 密码（必填）
+- **验证规则**：
+  - 使用 `class-validator` 装饰器进行验证
+  - 验证失败时自动返回 400 错误
+- **Swagger 文档**：
+  - 使用 `@ApiProperty` 装饰器为每个字段添加 API 文档说明
+  - 包含字段描述、示例值等信息
+  - 自动生成 Swagger API 文档
+- **用途**：用于用户登录接口的请求数据验证
 
 #### `modules/users/`
 - **作用**：用户模块目录

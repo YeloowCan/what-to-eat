@@ -36,9 +36,13 @@ async function bootstrap() {
     .setTitle('What-to-Eat API')
     .setDescription('What-to-Eat 智能饮食助手 API 文档')
     .setVersion('1.0')
+    .addTag('auth', '认证相关接口')
     .addTag('users', '用户相关接口')
+    .addBearerAuth()
     .build();
-  const document = SwaggerModule.createDocument(app, config);
+  const document = SwaggerModule.createDocument(app, config, {
+    operationIdFactory: (controllerKey: string, methodKey: string) => methodKey,
+  });
   SwaggerModule.setup('api-docs', app, document);
 
   await app.listen(port);
