@@ -880,3 +880,58 @@ JWT_EXPIRES_IN=7d
 
 ---
 
+### ✅ 1.12 实现用户登录服务（已完成）
+
+**完成时间**：2025年12月31日
+
+**完成内容**：
+1. 在 `users.service.ts` 中实现了 `validateUser` 方法
+2. 实现了根据用户名或邮箱查找用户的逻辑
+3. 实现了密码验证逻辑
+
+**修改的文件**：
+- `src/modules/users/users.service.ts` - 修改：添加 `validateUser` 方法
+
+**方法详情**：
+- **方法签名**：
+  ```typescript
+  async validateUser(
+    usernameOrEmail: string,
+    password: string,
+  ): Promise<Omit<User, 'passwordHash'> | null>
+  ```
+- **功能逻辑**：
+  1. 根据用户名或邮箱查找用户：使用 TypeORM 的 `where` 数组实现 `OR` 查询
+  2. 用户不存在：返回 `null`
+  3. 用户存在但密码错误：返回 `null`
+  4. 用户存在且密码正确：返回用户信息（不含 `passwordHash`）
+
+**实现细节**：
+- 使用 `findOne()` 方法，`where` 条件为数组 `[{ username }, { email }]`，实现 `OR` 查询
+- 复用已有的 `validatePassword()` 方法验证密码
+- 返回时排除 `passwordHash` 字段，确保安全性
+- 验证失败返回 `null`，不抛出异常（由调用方处理）
+
+**功能特性**：
+1. **灵活登录**：支持用户名或邮箱登录
+2. **安全性**：密码验证使用 bcrypt，返回数据不包含密码哈希
+3. **错误处理**：验证失败返回 `null`，不抛出异常（由调用方决定如何处理）
+4. **代码复用**：复用已有的 `validatePassword()` 方法
+
+**技术细节**：
+- 使用 TypeORM 的 `where` 数组语法实现 `OR` 查询
+- 支持同时查询 `username` 和 `email` 字段
+- 使用 `Omit<User, 'passwordHash'>` 确保返回类型不包含密码
+- 返回 `null` 而不是抛出异常，便于调用方处理
+
+**验证结果**：
+- ✅ 使用正确的用户名和密码，返回用户对象（不含 passwordHash）
+- ✅ 使用错误的密码，返回 `null`
+- ✅ 使用不存在的用户名，返回 `null`
+- ✅ 使用正确的邮箱和密码，返回用户对象
+- ✅ 使用错误的邮箱，返回 `null`
+
+**下一步**：1.13 实现用户登录 API 端点
+
+---
+

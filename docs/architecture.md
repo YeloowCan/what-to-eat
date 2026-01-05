@@ -415,6 +415,13 @@
   - `validatePassword(password: string, hashedPassword: string)`: 验证密码
     - 使用 bcrypt.compare() 安全地比较密码
     - 返回 Promise<boolean>
+- **用户验证方法**：
+  - `validateUser(usernameOrEmail: string, password: string)`: 验证用户登录
+    - 根据用户名或邮箱查找用户（使用 TypeORM 的 `OR` 查询）
+    - 验证密码是否正确
+    - 返回用户信息（不含密码）或 `null`
+    - 如果用户不存在或密码错误，返回 `null`（不抛出异常）
+    - 支持用户名或邮箱登录
 - **用户注册方法**：
   - `create(createUserDto: CreateUserDto)`: 创建新用户
     - 检查用户名和邮箱唯一性

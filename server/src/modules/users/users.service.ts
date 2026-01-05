@@ -38,6 +38,44 @@ export class UsersService {
   }
 
   /**
+   * 验证用户
+   * 根据用户名或邮箱查找用户，并验证密码
+   * @param usernameOrEmail 用户名或邮箱
+   * @param password 明文密码
+   * @returns 用户信息（不含密码），如果验证失败返回 null
+   */
+  async validateUser(
+    usernameOrEmail: string,
+    password: string,
+  ): Promise<Omit<User, 'passwordHash'> | null> {
+    // 根据用户名或邮箱查找用户
+    const user = await this.userRepository.findOne({
+      where: [{ username: usernameOrEmail }, { email: usernameOrEmail }],
+    });
+
+    // 如果用户不存在，返回 null
+    if (!user) {
+      return null;
+    }
+
+    // 验证密码
+    const isPasswordValid = await this.validatePassword(
+      password,
+      user.passwordHash,
+    );
+
+    // 如果密码不正确，返回 null
+    if (!isPasswordValid) {
+      return null;
+    }
+
+    // 密码正确，返回用户信息（不含密码）
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash: _, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+  }
+
+  /**
    * 创建用户
    * 检查用户名和邮箱唯一性，加密密码并保存用户
    * @param createUserDto 用户注册数据
