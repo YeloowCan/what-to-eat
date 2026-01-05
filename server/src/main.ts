@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -27,8 +28,19 @@ async function bootstrap() {
     }),
   );
 
+  // 配置 Swagger 文档
+  const config = new DocumentBuilder()
+    .setTitle('What-to-Eat API')
+    .setDescription('What-to-Eat 智能饮食助手 API 文档')
+    .setVersion('1.0')
+    .addTag('users', '用户相关接口')
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api-docs', app, document);
+
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}`);
   console.log(`API base URL: http://localhost:${port}/v1`);
+  console.log(`Swagger UI: http://localhost:${port}/api-docs`);
 }
 bootstrap();

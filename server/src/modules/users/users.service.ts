@@ -43,7 +43,9 @@ export class UsersService {
    * @param createUserDto 用户注册数据
    * @returns 创建的用户信息（不含密码）
    */
-  async create(createUserDto: CreateUserDto): Promise<Omit<User, 'passwordHash'>> {
+  async create(
+    createUserDto: CreateUserDto,
+  ): Promise<Omit<User, 'passwordHash'>> {
     // 检查用户名是否已存在
     const existingUserByUsername = await this.userRepository.findOne({
       where: { username: createUserDto.username },
@@ -75,6 +77,7 @@ export class UsersService {
     const savedUser = await this.userRepository.save(user);
 
     // 返回用户信息（不含密码）
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash: _, ...userWithoutPassword } = savedUser;
     return userWithoutPassword;
   }

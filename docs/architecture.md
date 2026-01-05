@@ -107,9 +107,19 @@
 - **环境变量使用**：
   - 通过 `ConfigService.get<number>('PORT')` 获取端口
   - 如果未配置，使用默认值 3000
+- **Swagger 文档配置**：
+  - 使用 `DocumentBuilder` 配置 API 文档信息
+  - API 标题：What-to-Eat API
+  - API 描述：What-to-Eat 智能饮食助手 API 文档
+  - API 版本：1.0
+  - 标签：users（用户相关接口）
+  - 使用 `SwaggerModule.createDocument()` 创建文档
+  - 使用 `SwaggerModule.setup('api-docs', app, document)` 设置文档路径
+  - 文档路径：`/api-docs`
 - **启动信息**：
   - 输出应用运行地址：`http://localhost:${port}`
   - 输出 API base URL：`http://localhost:${port}/v1`
+  - 输出 Swagger UI 地址：`http://localhost:${port}/api-docs`
 
 #### `app.module.ts`
 - **作用**：根模块，应用的依赖注入容器
@@ -286,6 +296,9 @@
   - 处理用户相关的 HTTP 请求和响应
   - 调用服务层处理业务逻辑
   - 返回统一的响应格式
+- **Swagger 文档**：
+  - 使用 `@ApiTags('users')` 装饰器将控制器分组到 users 标签
+  - 在 Swagger UI 中显示为独立的接口组
 - **当前状态**：空实现，已准备好添加路由处理
 - **依赖注入**：注入 `UsersService` 用于业务逻辑处理
 
@@ -303,6 +316,10 @@
 - **验证规则**：
   - 使用 `class-validator` 装饰器进行验证
   - 验证失败时自动返回 400 错误
+- **Swagger 文档**：
+  - 使用 `@ApiProperty` 装饰器为每个字段添加 API 文档说明
+  - 包含字段描述、示例值、验证规则等信息
+  - 自动生成 Swagger API 文档
 - **用途**：用于用户注册接口的请求数据验证
 
 #### `modules/users/dto/update-user-profile.dto.ts`
@@ -316,6 +333,11 @@
   - 所有字段都是可选的（`@IsOptional()`）
   - 数值字段有范围限制（`@Min()`, `@Max()`）
   - 性别字段使用枚举验证（`@IsEnum(Gender)`）
+- **Swagger 文档**：
+  - 使用 `@ApiProperty` 装饰器为每个字段添加 API 文档说明
+  - 包含字段描述、示例值、范围限制、可选标记等信息
+  - 枚举字段显示所有可选值
+  - 自动生成 Swagger API 文档
 - **包含内容**：
   - `Gender` 枚举定义（MALE = 'male', FEMALE = 'female'）
 - **用途**：用于更新用户资料接口的请求数据验证
@@ -566,6 +588,33 @@
 - 运行迁移：`pnpm run migration:run`
 - 回滚迁移：`pnpm run migration:revert`
 - 每次数据库结构变更都要创建迁移文件
+
+### API 文档（Swagger）
+- 使用 `@nestjs/swagger` 自动生成 API 文档
+- 在 `main.ts` 中配置 Swagger：
+  ```typescript
+  const config = new DocumentBuilder()
+    .setTitle('API Title')
+    .setDescription('API Description')
+    .setVersion('1.0')
+    .addTag('tag', 'Tag description')
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api-docs', app, document);
+  ```
+- 为 DTO 添加 `@ApiProperty` 装饰器：
+  ```typescript
+  @ApiProperty({
+    description: '字段描述',
+    example: '示例值',
+    required: true,
+  })
+  field: string;
+  ```
+- 为控制器添加 `@ApiTags('tag')` 装饰器进行分组
+- 为控制器方法添加 `@ApiOperation()`, `@ApiResponse()` 等装饰器
+- 访问 `/api-docs` 查看 Swagger UI
+- 可以在 Swagger UI 中直接测试 API
 
 ### 错误处理
 - 使用 NestJS 内置异常类处理错误

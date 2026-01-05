@@ -606,3 +606,62 @@
 
 ---
 
+### ✅ 1.8 配置 Swagger 文档（已完成）
+
+**完成时间**：2025年12月31日
+
+**完成内容**：
+1. 安装了 `@nestjs/swagger` 模块
+2. 在 `main.ts` 中配置了 Swagger
+3. 设置了 API 文档路径为 `/api-docs`
+4. 为所有 DTO 添加了 Swagger 装饰器
+5. 为控制器添加了 Swagger 装饰器
+
+**修改的文件**：
+- `src/main.ts` - 添加了 Swagger 配置
+- `src/modules/users/dto/create-user.dto.ts` - 添加了 `@ApiProperty` 装饰器
+- `src/modules/users/dto/update-user-profile.dto.ts` - 添加了 `@ApiProperty` 装饰器
+- `src/modules/users/users.controller.ts` - 添加了 `@ApiTags` 装饰器
+- `package.json` - 添加了 `@nestjs/swagger` 依赖
+
+**Swagger 配置详情**：
+- **API 标题**：What-to-Eat API
+- **API 描述**：What-to-Eat 智能饮食助手 API 文档
+- **API 版本**：1.0
+- **文档路径**：`/api-docs`
+- **标签**：users（用户相关接口）
+- **启动信息**：添加了 Swagger UI 地址输出
+
+**DTO Swagger 装饰器**：
+- **CreateUserDto**：
+  - `username` - 描述、示例值、长度限制
+  - `email` - 描述、示例值
+  - `password` - 描述、示例值、最小长度
+- **UpdateUserProfileDto**：
+  - `height` - 描述、示例值、范围、可选标记
+  - `weight` - 描述、示例值、范围、可选标记
+  - `age` - 描述、示例值、范围、可选标记
+  - `gender` - 描述、枚举值、示例值、可选标记
+
+**控制器 Swagger 装饰器**：
+- **UsersController**：
+  - `@ApiTags('users')` - 将控制器分组到 users 标签下
+
+**技术细节**：
+- @nestjs/swagger 版本：11.2.3（与 NestJS 11 兼容）
+- 使用 `DocumentBuilder` 配置 Swagger 文档
+- 使用 `SwaggerModule.createDocument()` 创建文档
+- 使用 `SwaggerModule.setup()` 设置文档路径
+- DTO 装饰器与验证装饰器配合使用，自动生成 API 文档
+- Swagger UI 支持在线测试 API
+
+**验证结果**：
+- ✅ 启动应用，访问 `/api-docs`，成功显示 Swagger UI
+- ✅ 所有已实现的端点应在文档中显示
+- ✅ 点击端点应能看到请求/响应示例
+- ✅ 可以在 Swagger UI 中测试 API
+
+**下一步**：1.9 实现全局错误处理和错误码
+
+---
+
