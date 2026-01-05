@@ -1143,3 +1143,87 @@ getProfile(@CurrentUser() user: JwtPayload) {
 
 ---
 
+### ✅ 1.16 实现获取用户信息 API（已完成）
+
+**完成时间**：2025年12月31日
+
+**完成内容**：
+1. 在 `users.service.ts` 中添加了 `findOne` 方法，根据用户 ID 查找用户
+2. 在 `users.controller.ts` 中创建了 `GET /v1/users/profile` 端点
+3. 使用 JWT 守卫保护路由
+4. 使用 `@CurrentUser()` 装饰器获取当前登录用户信息
+5. 返回当前登录用户的完整信息（包含用户资料）
+6. 添加了完整的 Swagger 文档（包括 Bearer 认证支持）
+7. 修复了 TypeScript 编译错误（使用 `import type` 导入 `JwtPayload`）
+
+**修改的文件**：
+- `src/modules/users/users.service.ts` - 添加了 `findOne` 方法
+- `src/modules/users/users.controller.ts` - 添加了 `getProfile` 端点
+
+**API 端点详情**：
+- **路径**：`GET /v1/users/profile`
+- **认证**：需要 JWT token（Bearer token）
+- **请求头**：`Authorization: Bearer <token>`
+- **成功响应（200）**：
+  ```json
+  {
+    "success": true,
+    "data": {
+      "id": 1,
+      "username": "zhangsan",
+      "email": "zhangsan@example.com",
+      "profile": {
+        "height": 175,
+        "weight": 70,
+        "age": 25,
+        "gender": "male"
+      },
+      "createdAt": "2025-12-31T12:00:00.000Z",
+      "updatedAt": "2025-12-31T12:00:00.000Z"
+    },
+    "message": "获取成功"
+  }
+  ```
+- **错误响应（401）**：未授权，需要登录（AUTH_001）
+- **错误响应（404）**：用户不存在（USER_001）
+
+**服务方法详情**：
+- **findOne(id: number)**: 根据用户 ID 查找用户
+  - 使用 TypeORM 的 `findOne()` 方法查询数据库
+  - 返回用户信息（不含密码）或 `null`
+  - 如果用户不存在，返回 `null`
+
+**控制器方法详情**：
+- **getProfile(@CurrentUser() jwtPayload: JwtPayload)**: 获取当前用户信息
+  - 使用 `@UseGuards(JwtAuthGuard)` 保护路由
+  - 使用 `@CurrentUser()` 装饰器获取当前登录用户的 JWT payload
+  - 从 JWT payload 中提取用户 ID（`jwtPayload.sub`）
+  - 调用 `usersService.findOne()` 获取完整用户信息
+  - 如果用户不存在，抛出 `NotFoundException`
+  - 返回统一响应格式
+
+**Swagger 文档**：
+- 使用 `@ApiBearerAuth()` 添加 Bearer 认证支持
+- 使用 `@ApiOperation` 添加接口描述
+- 使用 `@ApiResponse` 定义成功响应（200）和错误响应（401、404）
+- 包含完整的响应示例和字段说明
+- 支持在 Swagger UI 中直接测试（需要先登录获取 token）
+
+**技术细节**：
+- 使用 `@UseGuards(JwtAuthGuard)` 保护路由，确保只有认证用户才能访问
+- 使用 `@CurrentUser()` 装饰器简化获取当前用户的代码
+- 使用 `import type` 导入 `JwtPayload` 类型，避免 TypeScript 编译错误
+- 返回的用户信息不包含 `passwordHash` 字段（服务层已处理）
+- 如果用户不存在，抛出 `NotFoundException`，全局异常过滤器会统一处理
+
+**验证结果**：
+- ✅ 使用有效 token 访问，返回用户信息（包含用户资料）
+- ✅ 不使用 token 访问，返回 401 错误和统一错误格式
+- ✅ 响应中不包含敏感信息（如 passwordHash）
+- ✅ 在 Swagger UI 中测试，能成功获取用户信息（需要先登录获取 token）
+- ✅ TypeScript 编译通过，无类型错误
+
+**下一步**：1.17 实现更新用户资料 API
+
+---
+

@@ -76,6 +76,26 @@ export class UsersService {
   }
 
   /**
+   * 根据 ID 查找用户
+   * @param id 用户 ID
+   * @returns 用户信息（不含密码），如果用户不存在返回 null
+   */
+  async findOne(id: number): Promise<Omit<User, 'passwordHash'> | null> {
+    const user = await this.userRepository.findOne({
+      where: { id },
+    });
+
+    if (!user) {
+      return null;
+    }
+
+    // 返回用户信息（不含密码）
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash: _, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+  }
+
+  /**
    * 创建用户
    * 检查用户名和邮箱唯一性，加密密码并保存用户
    * @param createUserDto 用户注册数据

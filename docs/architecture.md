@@ -586,6 +586,11 @@
     - 返回用户信息（不含密码）或 `null`
     - 如果用户不存在或密码错误，返回 `null`（不抛出异常）
     - 支持用户名或邮箱登录
+- **用户查询方法**：
+  - `findOne(id: number)`: 根据用户 ID 查找用户
+    - 使用 TypeORM 的 `findOne()` 方法查询数据库
+    - 返回用户信息（不含密码）或 `null`
+    - 如果用户不存在，返回 `null`
 - **用户注册方法**：
   - `create(createUserDto: CreateUserDto)`: 创建新用户
     - 检查用户名和邮箱唯一性
@@ -618,16 +623,31 @@
     - 调用 `usersService.create()` 创建用户
     - 返回 `SuccessResponse<Omit<User, 'passwordHash'>>` 格式
     - 成功响应包含用户信息（不含密码）和成功消息
+  - `GET /v1/users/profile` - 获取当前用户信息
+    - 使用 `@Get('profile')` 装饰器定义路由
+    - 使用 `@UseGuards(JwtAuthGuard)` 保护路由，需要 JWT 认证
+    - 使用 `@CurrentUser()` 装饰器获取当前登录用户的 JWT payload
+    - 从 JWT payload 中提取用户 ID（`jwtPayload.sub`）
+    - 调用 `usersService.findOne()` 获取完整用户信息（包含用户资料）
+    - 如果用户不存在，抛出 `NotFoundException`
+    - 返回 `SuccessResponse<Omit<User, 'passwordHash'>>` 格式
+    - 成功响应包含用户完整信息（包括 profile 字段）
 - **Swagger 文档**：
   - 使用 `@ApiTags('users')` 装饰器将控制器分组到 users 标签
   - 使用 `@ApiOperation` 添加接口描述
-  - 使用 `@ApiBody` 说明请求体
+  - 使用 `@ApiBody` 说明请求体（注册接口）
+  - 使用 `@ApiBearerAuth()` 添加 Bearer 认证支持（获取用户信息接口）
   - 使用 `@ApiResponse` 定义成功和错误响应格式
   - 在 Swagger UI 中显示为独立的接口组，支持在线测试
+  - 获取用户信息接口支持在 Swagger UI 中直接测试（需要先登录获取 token）
 - **响应格式**：
   - 成功响应：`{ success: true, data: {...}, message: string }`
   - 错误响应：由全局异常过滤器统一处理
-- **依赖注入**：注入 `UsersService` 用于业务逻辑处理
+- **依赖注入**：
+  - 注入 `UsersService` 用于业务逻辑处理
+  - 使用 `@CurrentUser()` 装饰器获取当前登录用户信息（JwtPayload）
+- **类型导入**：
+  - 使用 `import type` 导入 `JwtPayload` 类型，避免 TypeScript 编译错误（当启用 `isolatedModules` 和 `emitDecoratorMetadata` 时）
 
 #### `modules/users/dto/`
 - **作用**：存放用户模块的 DTO（数据传输对象）文件
