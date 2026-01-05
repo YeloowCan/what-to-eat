@@ -83,10 +83,18 @@
 - **作用**：应用入口文件，启动 NestJS 应用
 - **功能**：
   - 创建 NestJS 应用实例
+  - 配置 API 版本控制
   - 配置全局验证管道（`ValidationPipe`）
   - 使用 `ConfigService` 读取环境变量中的端口配置
   - 监听端口（默认 3000，可通过 `.env` 中的 PORT 配置）
   - 启动 HTTP 服务器并输出启动信息
+- **API 版本控制配置**：
+  - `app.setGlobalPrefix('v1')` - 设置全局 API 前缀为 `/v1`
+  - `app.enableVersioning()` - 启用版本控制
+    - `type: VersioningType.URI` - 使用 URI 版本控制方式（版本号在路径中）
+    - `defaultVersion: '1'` - 设置默认版本为 1
+  - 所有 API 端点自动使用 `/v1` 前缀
+  - 例如：`/users` → `/v1/users`
 - **全局验证管道配置**：
   - `whitelist: true` - 自动去除 DTO 中未定义的属性
   - `forbidNonWhitelisted: true` - 禁止未定义的属性，返回 400 错误
@@ -99,6 +107,9 @@
 - **环境变量使用**：
   - 通过 `ConfigService.get<number>('PORT')` 获取端口
   - 如果未配置，使用默认值 3000
+- **启动信息**：
+  - 输出应用运行地址：`http://localhost:${port}`
+  - 输出 API base URL：`http://localhost:${port}/v1`
 
 #### `app.module.ts`
 - **作用**：根模块，应用的依赖注入容器
@@ -411,6 +422,13 @@
 - 使用 `ConfigService` 提供类型安全的环境变量访问
 - `.env` 文件不提交到版本控制，使用 `.env.example` 作为模板
 
+### 7. API 版本控制
+- 使用 NestJS 内置版本控制功能
+- 全局 API 前缀设置为 `/v1`
+- 使用 URI 版本控制方式（版本号在路径中）
+- 所有 API 端点自动包含版本前缀
+- 便于未来版本升级和向后兼容
+
 ### 6. 数据库管理
 - 使用 PostgreSQL 作为关系型数据库
 - 使用 TypeORM 作为 ORM 框架，提供类型安全的数据库操作
@@ -424,6 +442,13 @@
 - 使用 JSONB 类型存储复杂数据结构（如用户资料）
 - 数据库列名使用 snake_case，实体属性使用 camelCase
 - 迁移文件使用独立的数据源配置（`data-source.ts`）
+
+### 7. API 版本控制
+- 使用 NestJS 内置版本控制功能
+- 全局 API 前缀设置为 `/v1`
+- 使用 URI 版本控制方式（版本号在路径中）
+- 所有 API 端点自动包含版本前缀
+- 便于未来版本升级和向后兼容
 
 ---
 
