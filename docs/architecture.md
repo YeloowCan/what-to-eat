@@ -503,6 +503,45 @@
   - 自动生成 Swagger API 文档
 - **用途**：用于用户登录接口的请求数据验证
 
+#### `modules/auth/decorators/`
+- **作用**：存放认证相关的自定义装饰器
+- **位置**：`src/modules/auth/decorators/`
+- **说明**：装饰器用于简化控制器代码，提供便捷的参数注入功能
+
+#### `modules/auth/decorators/current-user.decorator.ts`
+- **作用**：当前用户装饰器，用于从请求中提取当前登录用户信息
+- **功能**：
+  - 使用 NestJS 的 `createParamDecorator` 创建自定义参数装饰器
+  - 从 `ExecutionContext` 中获取 HTTP 请求对象
+  - 从 `request.user` 中提取用户信息（由 JwtStrategy 注入）
+  - 返回 `JwtPayload` 类型，包含用户 ID、用户名、邮箱等信息
+- **使用方式**：
+  ```typescript
+  import { CurrentUser } from '../auth/decorators/current-user.decorator';
+  import { JwtPayload } from '../auth/jwt/jwt.strategy';
+  
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  getProfile(@CurrentUser() user: JwtPayload) {
+    return user; // 直接获取用户信息，无需访问 request
+  }
+  ```
+- **工作流程**：
+  1. 请求到达受保护的路由
+  2. `JwtAuthGuard` 验证 token 并将用户信息注入到 `request.user`
+  3. 控制器方法执行时，`@CurrentUser()` 装饰器从 `request.user` 中提取用户信息
+  4. 用户信息作为参数传递给控制器方法
+- **优势**：
+  - **代码简洁**：无需在控制器中手动访问 `request.user`
+  - **类型安全**：返回 `JwtPayload` 类型，编译时检查
+  - **易于使用**：只需在参数前添加装饰器
+  - **统一接口**：所有控制器使用相同的方式获取当前用户
+- **技术细节**：
+  - 使用 `createParamDecorator` 创建参数装饰器
+  - 从 `ExecutionContext` 中获取请求对象
+  - 类型安全：返回 `JwtPayload` 类型
+  - 必须在受 `JwtAuthGuard` 保护的路由中使用
+
 #### `modules/users/`
 - **作用**：用户模块目录
 - **位置**：`src/modules/users/`
@@ -1029,11 +1068,13 @@
   ```typescript
   import { UseGuards } from '@nestjs/common';
   import { JwtAuthGuard } from '../auth/jwt/jwt-auth.guard';
+  import { CurrentUser } from '../auth/decorators/current-user.decorator';
+  import { JwtPayload } from '../auth/jwt/jwt.strategy';
   
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  getProfile(@Request() req) {
-    return req.user; // 包含验证后的用户信息（JwtPayload）
+  getProfile(@CurrentUser() user: JwtPayload) {
+    return user; // 直接获取用户信息，无需访问 request
   }
   ```
 - **守卫工作流程**：
@@ -1048,15 +1089,23 @@
 - **错误处理**：
   - 如果 token 无效或过期，Passport 会自动抛出 `UnauthorizedException`
   - 全局异常过滤器会统一处理错误，返回统一格式的错误响应（AUTH_001 或 AUTH_002）
-- **获取当前用户**（后续步骤会创建装饰器）：
+- **获取当前用户**（使用 `@CurrentUser()` 装饰器）：
   ```typescript
   import { CurrentUser } from '../auth/decorators/current-user.decorator';
+  import { JwtPayload } from '../auth/jwt/jwt.strategy';
   
+  @UseGuards(JwtAuthGuard)
   @Get('profile')
   getProfile(@CurrentUser() user: JwtPayload) {
-    return user;
+    return user; // 直接获取用户信息，类型安全
   }
   ```
+  - 装饰器位置：`src/modules/auth/decorators/current-user.decorator.ts`
+  - 从 `request.user` 中提取用户信息（由 JwtStrategy 注入）
+  - 返回 `JwtPayload` 类型，包含用户 ID、用户名、邮箱
+  - 必须在受 `JwtAuthGuard` 保护的路由中使用
+  - **优势**：代码简洁、类型安全、易于使用
+  - **替代方案**：也可以使用 `@Request() req` 然后访问 `req.user`，但装饰器方式更简洁
 - **环境变量配置**：
   ```env
   JWT_SECRET=your-secret-key-change-in-production

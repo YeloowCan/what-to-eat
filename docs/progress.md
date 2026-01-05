@@ -1090,3 +1090,56 @@ getProfile(@Request() req) {
 
 ---
 
+### ✅ 1.15 创建当前用户装饰器（已完成）
+
+**完成时间**：2025年12月31日
+
+**完成内容**：
+1. 创建了 `@CurrentUser()` 自定义参数装饰器
+2. 实现了从 `request.user` 中提取当前登录用户信息的功能
+3. 装饰器返回 `JwtPayload` 类型，包含用户 ID、用户名、邮箱等信息
+
+**创建的文件和目录**：
+- `src/modules/auth/decorators/` - 装饰器目录
+  - `current-user.decorator.ts` - 当前用户装饰器
+
+**装饰器功能详情**：
+- **装饰器名称**：`@CurrentUser()`
+- **功能**：从 `request.user` 中提取当前登录用户信息
+- **返回类型**：`JwtPayload`（包含 `sub`, `username`, `email` 等字段）
+- **使用场景**：在受保护的控制器方法中使用，简化获取当前用户的代码
+
+**使用方式**：
+```typescript
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { JwtPayload } from '../auth/jwt/jwt.strategy';
+
+@UseGuards(JwtAuthGuard)
+@Get('profile')
+getProfile(@CurrentUser() user: JwtPayload) {
+  return user; // 直接获取用户信息，无需访问 request
+}
+```
+
+**技术细节**：
+- 使用 NestJS 的 `createParamDecorator` 创建自定义参数装饰器
+- 从 `ExecutionContext` 中获取 HTTP 请求对象
+- 从 `request.user` 中提取用户信息（由 JwtStrategy 注入）
+- 类型安全：返回 `JwtPayload` 类型，确保类型正确
+
+**优势**：
+1. **代码简洁**：无需在控制器中手动访问 `request.user`
+2. **类型安全**：使用 TypeScript 类型，编译时检查
+3. **易于使用**：只需在参数前添加 `@CurrentUser()` 装饰器
+4. **统一接口**：所有控制器使用相同的方式获取当前用户
+
+**验证结果**：
+- ✅ 在受保护的控制器方法中使用装饰器，能正确获取用户对象
+- ✅ 装饰器返回 `JwtPayload` 类型，包含用户 ID、用户名、邮箱
+- ✅ 代码简洁，无需手动访问 `request.user`
+- ✅ 类型安全，编译时检查通过
+
+**下一步**：1.16 实现获取用户信息 API
+
+---
+
