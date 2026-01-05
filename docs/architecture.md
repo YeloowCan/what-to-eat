@@ -116,6 +116,10 @@
   - 使用 `SwaggerModule.createDocument()` 创建文档
   - 使用 `SwaggerModule.setup('api-docs', app, document)` 设置文档路径
   - 文档路径：`/api-docs`
+- **全局异常过滤器配置**：
+  - 使用 `app.useGlobalFilters(new HttpExceptionFilter())` 注册全局异常过滤器
+  - 所有异常都会被统一处理，返回统一的错误响应格式
+  - 错误响应包含：success、error（code 和 message）、timestamp、path
 - **启动信息**：
   - 输出应用运行地址：`http://localhost:${port}`
   - 输出 API base URL：`http://localhost:${port}/v1`
@@ -225,6 +229,70 @@
   - `migration:generate` - 生成迁移文件
   - `migration:run` - 运行迁移
   - `migration:revert` - 回滚迁移
+
+---
+
+### 公共目录（src/common/）
+
+#### `common/`
+- **作用**：存放公共工具、过滤器、常量等共享代码
+- **位置**：`src/common/`
+- **包含内容**：
+  - `error-codes.ts` - 错误码定义
+  - `filters/` - 异常过滤器目录
+
+#### `common/error-codes.ts`
+- **作用**：统一管理所有错误码和错误消息
+- **包含内容**：
+  - `ErrorCode` 枚举：定义所有错误码
+  - `ErrorMessages` 对象：错误码对应的用户友好消息
+- **错误码格式**：`{模块}_{序号}`
+  - `AUTH_001 - AUTH_099`：认证相关错误
+  - `USER_001 - USER_099`：用户相关错误
+  - `DISH_001 - DISH_099`：菜品相关错误
+  - `VALIDATION_001 - VALIDATION_099`：验证相关错误
+  - `SYSTEM_001 - SYSTEM_099`：系统相关错误
+- **使用场景**：
+  - 在全局异常过滤器中映射错误码
+  - 在服务层抛出异常时引用错误码
+  - 统一错误消息，便于维护和国际化
+- **优势**：
+  - 集中管理所有错误码，便于查找和维护
+  - 错误消息统一，确保用户友好
+  - 支持错误码扩展，预留了各模块的错误码范围
+
+#### `common/filters/http-exception.filter.ts`
+- **作用**：全局异常过滤器，统一处理所有异常并返回统一格式的错误响应
+- **功能**：
+  - 捕获所有异常（使用 `@Catch()` 装饰器）
+  - 统一错误响应格式：`{ success: false, error: { code, message }, timestamp, path }`
+  - 智能错误码映射：根据异常类型和消息内容自动映射到具体错误码
+  - 用户友好消息：使用预定义的消息，不暴露技术细节
+  - 详细日志记录：开发环境记录完整错误信息，生产环境记录关键信息
+  - 处理 ValidationPipe 的数组错误响应
+- **错误响应格式**：
+  ```json
+  {
+    "success": false,
+    "error": {
+      "code": "USER_002",
+      "message": "用户名已存在"
+    },
+    "timestamp": "2025-12-31T12:00:00.000Z",
+    "path": "/v1/users/register"
+  }
+  ```
+- **错误码映射逻辑**：
+  - 根据 HTTP 状态码获取默认错误码
+  - 根据异常消息内容智能映射到具体错误码（如"用户名已存在" → USER_002）
+  - 支持处理字符串、对象和数组类型的异常响应
+- **日志记录策略**：
+  - 开发环境：记录完整错误信息、堆栈、请求 URL、请求方法、请求体
+  - 生产环境：只记录关键信息（错误码、消息、路径）
+- **处理的异常类型**：
+  - `HttpException`：NestJS 内置异常（BadRequestException, NotFoundException, UnauthorizedException, ConflictException 等）
+  - 未知异常：系统错误，返回 SYSTEM_001 错误码
+- **注册方式**：在 `main.ts` 中使用 `app.useGlobalFilters(new HttpExceptionFilter())` 注册
 
 ---
 
@@ -617,19 +685,53 @@
 - 可以在 Swagger UI 中直接测试 API
 
 ### 错误处理
-- 使用 NestJS 内置异常类处理错误
-- 常见异常类型：
-  - `ConflictException` - 资源冲突（如用户名、邮箱已存在）
-  - `NotFoundException` - 资源不存在
-  - `BadRequestException` - 请求参数错误
-  - `UnauthorizedException` - 未授权
-- 异常使用示例：
+- **统一错误响应格式**：所有错误都返回统一格式：
+  ```json
+  {
+    "success": false,
+    "error": {
+      "code": "USER_002",
+      "message": "用户名已存在"
+    },
+    "timestamp": "2025-12-31T12:00:00.000Z",
+    "path": "/v1/users/register"
+  }
+  ```
+- **错误码规范**：
+  - 错误码格式：`{模块}_{序号}`（如 `USER_002`, `AUTH_001`）
+  - 错误码定义在 `src/common/error-codes.ts` 中
+  - 每个错误码都有对应的用户友好消息
+  - 错误码范围：
+    - `AUTH_001 - AUTH_099`：认证相关错误
+    - `USER_001 - USER_099`：用户相关错误
+    - `DISH_001 - DISH_099`：菜品相关错误
+    - `VALIDATION_001 - VALIDATION_099`：验证相关错误
+    - `SYSTEM_001 - SYSTEM_099`：系统相关错误
+- **全局异常过滤器**：
+  - 位置：`src/common/filters/http-exception.filter.ts`
+  - 自动捕获所有异常并转换为统一格式
+  - 智能错误码映射：根据异常类型和消息内容自动映射
+  - 开发环境记录详细日志，生产环境记录关键信息
+- **使用 NestJS 内置异常类**：
+  - `ConflictException` - 资源冲突（如用户名、邮箱已存在）→ USER_002 或 USER_003
+  - `NotFoundException` - 资源不存在 → SYSTEM_003 或 USER_001
+  - `BadRequestException` - 请求参数错误 → VALIDATION_001
+  - `UnauthorizedException` - 未授权 → AUTH_001
+- **异常使用示例**：
   ```typescript
   if (existingUser) {
     throw new ConflictException('用户名已存在');
   }
+  // 全局异常过滤器会自动将 "用户名已存在" 映射到 USER_002
   ```
-- 异常会自动转换为 HTTP 状态码和错误响应
+- **错误码引用**（可选，用于明确指定错误码）：
+  ```typescript
+  import { ErrorCode } from '../common/error-codes';
+  // 在需要明确指定错误码时使用（通常不需要，过滤器会自动映射）
+  ```
+- **验证错误处理**：
+  - ValidationPipe 的验证错误会自动转换为 VALIDATION_001 错误码
+  - 多个验证错误时，返回第一个错误消息
 
 ### 测试
 - 单元测试：`pnpm run test`
