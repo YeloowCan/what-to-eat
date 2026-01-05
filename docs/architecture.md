@@ -384,6 +384,48 @@
 - **类型处理**：
   - `expiresIn` 使用 `as any` 类型断言，因为 JWT 库支持字符串格式（如 '7d'），但 TypeScript 类型定义较严格
 
+#### `modules/auth/jwt/jwt-auth.guard.ts`
+- **作用**：JWT 认证守卫，用于保护需要认证的路由
+- **功能**：
+  - 继承 `AuthGuard('jwt')`，使用 'jwt' 策略（对应 JwtStrategy）
+  - 从请求头中提取 token（由 JwtStrategy 配置）
+  - 验证 token 的签名和过期时间（由 Passport 和 JwtStrategy 处理）
+  - 将验证后的用户信息注入到 `request.user`（由 JwtStrategy.validate() 返回）
+  - 支持公开路由标记（使用 Reflector 检查 'isPublic' 元数据）
+- **使用方式**：
+  ```typescript
+  import { UseGuards } from '@nestjs/common';
+  import { JwtAuthGuard } from '../auth/jwt/jwt-auth.guard';
+  
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  getProfile(@Request() req) {
+    return req.user; // 包含验证后的用户信息（JwtPayload）
+  }
+  ```
+- **工作流程**：
+  1. 请求到达受保护的路由
+  2. `JwtAuthGuard` 检查路由是否标记为公开（使用 Reflector）
+  3. 如果不是公开路由，调用父类的 `canActivate()` 方法
+  4. Passport 使用 JwtStrategy 从请求头提取 token
+  5. JwtStrategy 验证 token 的签名和过期时间
+  6. 如果验证成功，调用 `JwtStrategy.validate()` 方法
+  7. 返回的用户信息（JwtPayload）注入到 `request.user`
+  8. 请求继续处理，控制器可以通过 `@Request()` 装饰器访问用户信息
+- **依赖注入**：
+  ```typescript
+  constructor(private reflector: Reflector) {
+    super();
+  }
+  ```
+- **公开路由支持**：
+  - 使用 `Reflector` 检查路由是否标记为 'isPublic'
+  - 如果标记为公开，跳过认证，直接返回 `true`
+  - 为后续创建 `@Public()` 装饰器预留功能
+- **错误处理**：
+  - 如果 token 无效或过期，Passport 会自动抛出 `UnauthorizedException`
+  - 全局异常过滤器会统一处理错误，返回统一格式的错误响应
+
 #### `modules/auth/auth.module.ts`
 - **作用**：认证模块定义文件
 - **功能**：
@@ -983,7 +1025,7 @@
   const payload = { sub: user.id, username: user.username, email: user.email };
   const token = this.jwtService.sign(payload);
   ```
-- **保护路由**（后续步骤会创建 Guard）：
+- **保护路由**：
   ```typescript
   import { UseGuards } from '@nestjs/common';
   import { JwtAuthGuard } from '../auth/jwt/jwt-auth.guard';
@@ -991,9 +1033,21 @@
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   getProfile(@Request() req) {
-    return req.user; // 包含验证后的用户信息
+    return req.user; // 包含验证后的用户信息（JwtPayload）
   }
   ```
+- **守卫工作流程**：
+  1. 请求到达受保护的路由
+  2. `JwtAuthGuard` 检查路由是否标记为公开
+  3. 如果不是公开路由，调用父类的 `canActivate()` 方法
+  4. Passport 使用 JwtStrategy 从请求头提取 token
+  5. JwtStrategy 验证 token 的签名和过期时间
+  6. 如果验证成功，调用 `JwtStrategy.validate()` 方法
+  7. 返回的用户信息（JwtPayload）注入到 `request.user`
+  8. 请求继续处理，控制器可以通过 `@Request()` 装饰器访问用户信息
+- **错误处理**：
+  - 如果 token 无效或过期，Passport 会自动抛出 `UnauthorizedException`
+  - 全局异常过滤器会统一处理错误，返回统一格式的错误响应（AUTH_001 或 AUTH_002）
 - **获取当前用户**（后续步骤会创建装饰器）：
   ```typescript
   import { CurrentUser } from '../auth/decorators/current-user.decorator';
