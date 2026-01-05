@@ -11,7 +11,6 @@ async function bootstrap() {
   const port = configService.get<number>('PORT') ?? 3000;
 
   // 配置 API 版本控制
-  app.setGlobalPrefix('v1');
   app.enableVersioning({
     type: VersioningType.URI,
     defaultVersion: '1',
@@ -47,4 +46,4 @@ async function bootstrap() {
   console.log(`API base URL: http://localhost:${port}/v1`);
   console.log(`Swagger UI: http://localhost:${port}/api-docs`);
 }
-bootstrap();
+void bootstrap();
