@@ -728,3 +728,76 @@
 
 ---
 
+### ✅ 1.10 实现用户注册 API 端点（已完成）
+
+**完成时间**：2025年12月31日
+
+**完成内容**：
+1. 创建了统一响应格式接口，定义成功响应格式
+2. 在 `users.controller.ts` 中实现了 `POST /v1/users/register` 端点
+3. 调用服务层创建用户，返回统一的成功响应格式
+4. 添加了完整的 Swagger 文档装饰器
+
+**修改的文件**：
+- `src/common/interfaces/api-response.interface.ts` - 新建：统一响应格式接口
+- `src/modules/users/users.controller.ts` - 修改：添加注册端点
+
+**API 端点详情**：
+- **路径**：`POST /v1/users/register`
+- **请求体**：`CreateUserDto`（username, email, password）
+- **成功响应（201）**：
+  ```json
+  {
+    "success": true,
+    "data": {
+      "id": 1,
+      "username": "zhangsan",
+      "email": "zhangsan@example.com",
+      "profile": null,
+      "createdAt": "2025-12-31T12:00:00.000Z",
+      "updatedAt": "2025-12-31T12:00:00.000Z"
+    },
+    "message": "注册成功"
+  }
+  ```
+- **错误响应（409）**：用户名或邮箱已存在（USER_002 或 USER_003）
+- **错误响应（400）**：请求参数验证失败（VALIDATION_001）
+
+**统一响应格式**：
+- **成功响应**：`{ success: true, data: T, message: string }`
+- **错误响应**：`{ success: false, error: { code: string, message: string }, timestamp: string, path: string }`
+- 使用 TypeScript 接口确保类型安全
+
+**Swagger 文档**：
+- `@ApiOperation`：接口描述和说明
+- `@ApiBody`：请求体说明
+- `@ApiResponse`：成功响应（201）和错误响应（409、400）的详细文档
+- 包含示例值和字段说明
+- 支持在 Swagger UI 中直接测试
+
+**功能特性**：
+1. **统一响应格式**：所有成功响应使用相同的结构
+2. **类型安全**：使用 TypeScript 接口确保类型正确
+3. **自动验证**：ValidationPipe 自动验证请求参数
+4. **错误处理**：全局异常过滤器统一处理错误
+5. **API 文档**：Swagger 自动生成文档，支持在线测试
+6. **安全性**：响应中不包含 `passwordHash` 字段（服务层已处理）
+
+**技术细节**：
+- 使用 `@HttpCode(HttpStatus.CREATED)` 返回 201 状态码
+- 使用 `@Post('register')` 定义路由
+- 使用 `@Body()` 装饰器接收请求体
+- 调用 `usersService.create()` 创建用户
+- 返回类型为 `Promise<SuccessResponse<Omit<User, 'passwordHash'>>>`
+
+**验证结果**：
+- ✅ 使用 Postman 或 curl 发送注册请求，返回 201 状态码和用户信息
+- ✅ 响应中不包含 `passwordHash` 字段
+- ✅ 重复注册相同用户，返回 409 冲突错误和统一错误格式
+- ✅ 在 Swagger UI 中测试，能成功注册
+- ✅ 验证错误（发送无效数据）返回 400 错误
+
+**下一步**：1.11 配置 JWT 认证模块
+
+---
+

@@ -240,6 +240,7 @@
 - **包含内容**：
   - `error-codes.ts` - 错误码定义
   - `filters/` - 异常过滤器目录
+  - `interfaces/` - 公共接口定义目录
 
 #### `common/error-codes.ts`
 - **作用**：统一管理所有错误码和错误消息
@@ -293,6 +294,29 @@
   - `HttpException`：NestJS 内置异常（BadRequestException, NotFoundException, UnauthorizedException, ConflictException 等）
   - 未知异常：系统错误，返回 SYSTEM_001 错误码
 - **注册方式**：在 `main.ts` 中使用 `app.useGlobalFilters(new HttpExceptionFilter())` 注册
+
+#### `common/interfaces/api-response.interface.ts`
+- **作用**：定义统一的 API 响应格式接口
+- **包含内容**：
+  - `SuccessResponse<T>` 接口：成功响应格式
+  - `ErrorResponse` 接口：错误响应格式（参考，实际定义在 `http-exception.filter.ts` 中）
+- **成功响应格式**：
+  ```typescript
+  {
+    success: true;
+    data: T;
+    message: string;
+  }
+  ```
+- **使用场景**：
+  - 在控制器方法中作为返回类型
+  - 确保所有成功响应格式统一
+  - 提供类型安全保证
+- **优势**：
+  - 统一响应格式，便于前端处理
+  - TypeScript 类型安全，编译时检查
+  - 支持泛型，可以指定 data 的类型
+  - 便于维护和扩展
 
 ---
 
@@ -364,10 +388,23 @@
   - 处理用户相关的 HTTP 请求和响应
   - 调用服务层处理业务逻辑
   - 返回统一的响应格式
+- **API 端点**：
+  - `POST /v1/users/register` - 用户注册
+    - 使用 `@Post('register')` 装饰器定义路由
+    - 使用 `@HttpCode(HttpStatus.CREATED)` 返回 201 状态码
+    - 接收 `CreateUserDto` 作为请求体
+    - 调用 `usersService.create()` 创建用户
+    - 返回 `SuccessResponse<Omit<User, 'passwordHash'>>` 格式
+    - 成功响应包含用户信息（不含密码）和成功消息
 - **Swagger 文档**：
   - 使用 `@ApiTags('users')` 装饰器将控制器分组到 users 标签
-  - 在 Swagger UI 中显示为独立的接口组
-- **当前状态**：空实现，已准备好添加路由处理
+  - 使用 `@ApiOperation` 添加接口描述
+  - 使用 `@ApiBody` 说明请求体
+  - 使用 `@ApiResponse` 定义成功和错误响应格式
+  - 在 Swagger UI 中显示为独立的接口组，支持在线测试
+- **响应格式**：
+  - 成功响应：`{ success: true, data: {...}, message: string }`
+  - 错误响应：由全局异常过滤器统一处理
 - **依赖注入**：注入 `UsersService` 用于业务逻辑处理
 
 #### `modules/users/dto/`
@@ -657,6 +694,45 @@
 - 回滚迁移：`pnpm run migration:revert`
 - 每次数据库结构变更都要创建迁移文件
 
+### API 响应格式
+- **统一响应格式**：所有 API 端点使用统一的响应格式
+- **成功响应格式**：
+  ```typescript
+  {
+    success: true;
+    data: T;  // 实际数据
+    message: string;  // 成功消息
+  }
+  ```
+- **错误响应格式**：
+  ```typescript
+  {
+    success: false;
+    error: {
+      code: string;  // 错误码（如 USER_002）
+      message: string;  // 错误消息
+    };
+    timestamp: string;  // 时间戳
+    path: string;  // 请求路径
+  }
+  ```
+- **在控制器中使用**：
+  ```typescript
+  import { SuccessResponse } from '../../common/interfaces/api-response.interface';
+  
+  @Post('register')
+  async register(@Body() dto: CreateUserDto): Promise<SuccessResponse<User>> {
+    const user = await this.service.create(dto);
+    return {
+      success: true,
+      data: user,
+      message: '注册成功',
+    };
+  }
+  ```
+- **类型安全**：使用 TypeScript 接口确保响应格式正确
+- **错误处理**：错误响应由全局异常过滤器自动处理，无需手动返回
+
 ### API 文档（Swagger）
 - 使用 `@nestjs/swagger` 自动生成 API 文档
 - 在 `main.ts` 中配置 Swagger：
@@ -681,6 +757,21 @@
   ```
 - 为控制器添加 `@ApiTags('tag')` 装饰器进行分组
 - 为控制器方法添加 `@ApiOperation()`, `@ApiResponse()` 等装饰器
+- 使用 `@ApiResponse` 定义响应格式：
+  ```typescript
+  @ApiResponse({
+    status: 201,
+    description: '创建成功',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        data: { type: 'object', ... },
+        message: { type: 'string', example: '操作成功' },
+      },
+    },
+  })
+  ```
 - 访问 `/api-docs` 查看 Swagger UI
 - 可以在 Swagger UI 中直接测试 API
 
