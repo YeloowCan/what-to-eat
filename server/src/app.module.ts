@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { User } from './entities/user.entity';
 import { UsersModule } from './modules/users/users.module';
+import { JwtModule } from './modules/auth/jwt/jwt.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { UsersModule } from './modules/users/users.module';
       inject: [ConfigService],
     }),
     UsersModule,
+    JwtModule,
   ],
   controllers: [AppController],
   providers: [AppService],

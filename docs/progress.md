@@ -801,3 +801,82 @@
 
 ---
 
+### ✅ 1.11 配置 JWT 认证模块（已完成）
+
+**完成时间**：2025年12月31日
+
+**完成内容**：
+1. 安装了 JWT 和 Passport 相关依赖包
+2. 创建了 JWT 模块，配置密钥和过期时间
+3. 创建了 JWT 策略（Passport Strategy）
+4. 将 JWT 模块注册到 AppModule
+
+**修改的文件**：
+- `src/modules/auth/jwt/jwt.module.ts` - 新建：JWT 模块配置
+- `src/modules/auth/jwt/jwt.strategy.ts` - 新建：JWT 策略
+- `src/app.module.ts` - 修改：导入 JwtModule
+- `package.json` - 修改：添加 JWT 和 Passport 依赖
+
+**安装的依赖包**：
+- `@nestjs/jwt` (11.0.2) - NestJS JWT 模块
+- `@nestjs/passport` (11.0.5) - NestJS Passport 集成
+- `passport` (0.7.0) - Passport 认证框架
+- `passport-jwt` (4.0.1) - Passport JWT 策略
+- `@types/passport-jwt` (4.0.1) - TypeScript 类型定义
+
+**JWT 模块配置**：
+- **密钥来源**：环境变量 `JWT_SECRET`（默认：'your-secret-key'）
+- **过期时间**：环境变量 `JWT_EXPIRES_IN`（默认：'7d'）
+- **配置方式**：使用 `JwtModule.registerAsync()` 异步配置
+- **Passport 集成**：注册 `PassportModule`，默认策略为 'jwt'
+- **模块导出**：导出 `JwtModule` 和 `PassportModule` 供其他模块使用
+
+**JWT 策略配置**：
+- **Token 提取方式**：从 `Authorization: Bearer <token>` header 中提取
+- **过期验证**：不忽略过期时间，自动验证 token 是否过期
+- **密钥验证**：使用环境变量中的 `JWT_SECRET` 验证 token 签名
+- **Payload 验证**：在 `validate()` 方法中验证 payload 的有效性
+
+**JWT Payload 结构**：
+```typescript
+{
+  sub: number;      // 用户 ID
+  username: string; // 用户名
+  email: string;    // 邮箱
+  iat?: number;     // 签发时间
+  exp?: number;     // 过期时间
+}
+```
+
+**功能特性**：
+1. **异步配置**：使用 `registerAsync()` 从环境变量读取配置
+2. **类型安全**：定义了 `JwtPayload` 接口
+3. **验证逻辑**：在 `validate()` 方法中可以扩展验证逻辑（如检查用户状态）
+4. **模块化**：独立的 JWT 模块，便于复用和维护
+5. **环境变量支持**：密钥和过期时间可通过环境变量配置
+
+**环境变量配置**：
+需要在 `.env` 文件中添加：
+```env
+JWT_SECRET=your-secret-key-change-in-production
+JWT_EXPIRES_IN=7d
+```
+
+**技术细节**：
+- 使用 `PassportStrategy(Strategy)` 继承 Passport 策略
+- 使用 `ExtractJwt.fromAuthHeaderAsBearerToken()` 提取 token
+- 使用 `ConfigService` 读取环境变量
+- 在 `validate()` 方法中可以进行额外的用户验证
+- 抛出 `UnauthorizedException` 处理无效 token
+
+**验证结果**：
+- ✅ 使用测试密钥生成 JWT token，能成功生成
+- ✅ 解析生成的 token，能正确提取 payload
+- ✅ 使用过期 token，抛出过期错误
+- ✅ JWT 模块正确注册到 AppModule
+- ✅ JWT 策略正确配置和验证
+
+**下一步**：1.12 实现用户登录服务
+
+---
+

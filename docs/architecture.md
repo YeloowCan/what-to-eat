@@ -327,6 +327,57 @@
 - **位置**：`src/modules/`
 - **说明**：每个业务功能对应一个模块目录，包含模块、控制器、服务等文件
 
+#### `modules/auth/`
+- **作用**：认证模块目录
+- **位置**：`src/modules/auth/`
+- **包含内容**：
+  - `jwt/` - JWT 认证相关文件
+
+#### `modules/auth/jwt/jwt.module.ts`
+- **作用**：JWT 模块配置
+- **功能**：
+  - 配置 JWT 模块，设置密钥和过期时间
+  - 注册 Passport 模块，设置默认策略为 'jwt'
+  - 注册 JWT 策略
+  - 导出 JWT 和 Passport 模块供其他模块使用
+- **配置内容**：
+  - 使用 `JwtModule.registerAsync()` 异步配置
+  - 从环境变量读取 `JWT_SECRET`（默认：'your-secret-key'）
+  - 从环境变量读取 `JWT_EXPIRES_IN`（默认：'7d'）
+  - 注册 `PassportModule`，默认策略为 'jwt'
+- **导出内容**：
+  - `NestJwtModule` - 供其他模块生成和验证 JWT token
+  - `PassportModule` - 供其他模块使用 Passport 功能
+
+#### `modules/auth/jwt/jwt.strategy.ts`
+- **作用**：JWT 认证策略
+- **功能**：
+  - 继承 `PassportStrategy(Strategy)` 实现 JWT 认证策略
+  - 从 `Authorization` header 中提取 Bearer token
+  - 验证 token 的签名和过期时间
+  - 验证 payload 的有效性
+- **JWT Payload 接口**：
+  ```typescript
+  interface JwtPayload {
+    sub: number;      // 用户 ID
+    username: string; // 用户名
+    email: string;    // 邮箱
+    iat?: number;     // 签发时间
+    exp?: number;     // 过期时间
+  }
+  ```
+- **配置选项**：
+  - `jwtFromRequest`: 从 Authorization header 的 Bearer token 中提取
+  - `ignoreExpiration`: false（不忽略过期时间）
+  - `secretOrKey`: 从环境变量 `JWT_SECRET` 读取
+- **验证方法**：
+  - `validate(payload: JwtPayload)`: 验证 payload 的有效性
+  - 可以在此方法中添加额外的验证逻辑（如检查用户状态）
+  - 返回验证后的用户信息
+- **使用场景**：
+  - 在需要认证的控制器或路由中使用 `@UseGuards(JwtAuthGuard)`
+  - 通过 `@Request()` 装饰器获取验证后的用户信息
+
 #### `modules/users/`
 - **作用**：用户模块目录
 - **位置**：`src/modules/users/`
@@ -823,6 +874,60 @@
 - **验证错误处理**：
   - ValidationPipe 的验证错误会自动转换为 VALIDATION_001 错误码
   - 多个验证错误时，返回第一个错误消息
+
+### JWT 认证
+- **JWT 模块**：位置 `src/modules/auth/jwt/jwt.module.ts`
+  - 配置 JWT 密钥和过期时间
+  - 从环境变量读取配置：`JWT_SECRET` 和 `JWT_EXPIRES_IN`
+  - 导出 `JwtModule` 和 `PassportModule` 供其他模块使用
+- **JWT 策略**：位置 `src/modules/auth/jwt/jwt.strategy.ts`
+  - 从 `Authorization: Bearer <token>` header 中提取 token
+  - 验证 token 签名和过期时间
+  - 在 `validate()` 方法中验证 payload
+- **生成 JWT token**：
+  ```typescript
+  import { JwtService } from '@nestjs/jwt';
+  
+  constructor(private jwtService: JwtService) {}
+  
+  const payload = { sub: user.id, username: user.username, email: user.email };
+  const token = this.jwtService.sign(payload);
+  ```
+- **保护路由**（后续步骤会创建 Guard）：
+  ```typescript
+  import { UseGuards } from '@nestjs/common';
+  import { JwtAuthGuard } from '../auth/jwt/jwt-auth.guard';
+  
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  getProfile(@Request() req) {
+    return req.user; // 包含验证后的用户信息
+  }
+  ```
+- **获取当前用户**（后续步骤会创建装饰器）：
+  ```typescript
+  import { CurrentUser } from '../auth/decorators/current-user.decorator';
+  
+  @Get('profile')
+  getProfile(@CurrentUser() user: JwtPayload) {
+    return user;
+  }
+  ```
+- **环境变量配置**：
+  ```env
+  JWT_SECRET=your-secret-key-change-in-production
+  JWT_EXPIRES_IN=7d
+  ```
+- **JWT Payload 结构**：
+  ```typescript
+  interface JwtPayload {
+    sub: number;      // 用户 ID
+    username: string; // 用户名
+    email: string;    // 邮箱
+    iat?: number;     // 签发时间
+    exp?: number;     // 过期时间
+  }
+  ```
 
 ### 测试
 - 单元测试：`pnpm run test`
