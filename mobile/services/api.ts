@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import type { ApiErrorResponse } from '../types/api';
+import { useAuthStore } from '../store/authStore';
 
 /**
  * 错误码到用户友好消息的映射
@@ -67,20 +68,21 @@ const api: AxiosInstance = axios.create({
  */
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    // 从 Zustand store 获取 token
+    const token = useAuthStore.getState().token;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
     // 开发环境打印请求日志
     if (__DEV__) {
       console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, {
         baseURL: config.baseURL,
         params: config.params,
         data: config.data,
+        hasAuth: !!token, // 是否包含认证信息
       });
     }
-
-    // TODO: 在步骤 2.3 中添加 token
-    // const token = useAuthStore.getState().token;
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
 
     return config;
   },

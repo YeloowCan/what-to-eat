@@ -1458,3 +1458,58 @@ getProfile(@CurrentUser() user: JwtPayload) {
 
 ---
 
+### ✅ 2.3 实现 API 请求拦截器（添加 Token）（已完成）
+
+**完成时间**：2025年12月31日
+
+**完成内容**：
+1. 创建了基本的认证 Store（`store/authStore.ts`）
+2. 在请求拦截器中实现了从 Zustand store 获取 token
+3. 实现了自动添加 Authorization 请求头（格式：`Bearer {token}`）
+4. 在开发环境日志中添加了认证信息标志
+
+**创建的文件和目录**：
+- `mobile/store/` - 状态管理目录
+  - `authStore.ts` - 认证状态管理 Store
+
+**修改的文件**：
+- `mobile/services/api.ts` - 更新了请求拦截器，添加了 token 自动添加功能
+
+**认证 Store 详情**：
+- **状态定义**：
+  - `user: User | null` - 当前登录用户信息
+  - `token: string | null` - JWT token
+  - `isAuthenticated: boolean` - 是否已认证
+- **Actions**：
+  - `login(user, token)` - 登录，设置用户和 token
+  - `logout()` - 登出，清空用户和 token
+  - `setUser(user)` - 更新用户信息
+- **User 接口**：
+  - 与后端 User 实体保持一致
+  - 包含 id、username、email、profile、createdAt、updatedAt 字段
+
+**请求拦截器更新**：
+- **Token 获取**：从 `useAuthStore.getState().token` 获取 token
+- **自动添加**：如果 token 存在，自动添加到请求头的 `Authorization` 字段
+- **格式**：`Bearer {token}`（符合 JWT 标准）
+- **开发日志**：在请求日志中添加 `hasAuth` 标志，显示是否包含认证信息
+
+**技术细节**：
+- 使用 Zustand 的 `getState()` 方法在拦截器中获取 token（非 React Hook）
+- Token 从 store 实时获取，无需手动传递
+- 所有 API 请求都会自动检查并添加 token（如果存在）
+- 如果 token 不存在，请求头不包含 Authorization 字段（正常行为）
+
+**验证结果**：
+- ✅ 创建了 `store/authStore.ts` 文件
+- ✅ 在请求拦截器中实现了 token 获取和添加
+- ✅ 格式正确：`Bearer {token}`
+- ✅ 开发环境日志显示认证信息
+- ⏳ 在 store 中设置 token，发送请求，应能在请求头中看到 Authorization（需要用户验证）
+- ⏳ 清除 token，发送请求，应不包含 Authorization 头（需要用户验证）
+- ⏳ 使用 Postman 或后端日志验证后端收到的请求头是否正确（需要用户验证）
+
+**下一步**：2.4 创建认证 Store（Zustand）（实际上已在步骤 2.3 中提前完成，后续可以完善）
+
+---
+

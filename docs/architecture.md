@@ -1331,8 +1331,11 @@
   - **timeout**：10 秒
   - **headers**：`Content-Type: application/json`
 - **请求拦截器**：
-  - 开发环境打印请求日志（方法、URL、参数、数据）
-  - 预留了 token 添加位置（步骤 2.3 实现）
+  - **Token 自动添加**：从 Zustand store 获取 token，如果存在则自动添加到请求头的 `Authorization` 字段
+    - 格式：`Bearer {token}`（符合 JWT 标准）
+    - 使用 `useAuthStore.getState().token` 获取 token（非 React Hook）
+    - 所有 API 请求都会自动检查并添加 token（如果存在）
+  - 开发环境打印请求日志（方法、URL、参数、数据、hasAuth 标志）
 - **响应拦截器**：
   - 开发环境打印响应日志（状态码、响应数据）
   - 直接返回 `response.data`（后端已使用统一格式）
@@ -1405,6 +1408,62 @@
     return await api.get('/users/profile');
   }
   ```
+
+---
+
+### 状态管理目录（store/）
+
+#### `store/`
+- **作用**：存放 Zustand 状态管理 Store
+- **位置**：`mobile/store/`
+- **说明**：所有全局状态管理都在此目录
+
+#### `store/authStore.ts`
+- **作用**：认证状态管理 Store
+- **功能**：
+  - 管理用户认证状态（用户信息、token、认证状态）
+  - 提供登录、登出、更新用户信息等方法
+  - 与 API 服务集成，自动在请求中添加 token
+- **状态定义**：
+  - `user: User | null` - 当前登录用户信息
+  - `token: string | null` - JWT token
+  - `isAuthenticated: boolean` - 是否已认证（计算属性，基于 user 和 token）
+- **Actions**：
+  - `login(user, token)` - 登录，设置用户和 token，更新认证状态
+  - `logout()` - 登出，清空用户和 token，重置认证状态
+  - `setUser(user)` - 更新用户信息，保持 token 不变
+- **User 接口**：
+  - 与后端 User 实体保持一致
+  - 包含字段：`id`, `username`, `email`, `profile`, `createdAt`, `updatedAt`
+  - `profile` 字段为可选，包含用户资料（身高、体重、年龄、性别）
+- **使用方式**：
+  ```typescript
+  import { useAuthStore } from '@/store/authStore';
+  
+  // 在组件中使用
+  const { user, token, isAuthenticated, login, logout } = useAuthStore();
+  
+  // 登录
+  login(userData, tokenString);
+  
+  // 登出
+  logout();
+  
+  // 更新用户信息
+  setUser(updatedUser);
+  
+  // 在非 React 组件中获取状态（如 API 拦截器）
+  const token = useAuthStore.getState().token;
+  ```
+- **与 API 服务集成**：
+  - API 请求拦截器会自动从 store 获取 token
+  - 如果 token 存在，自动添加到请求头的 `Authorization` 字段
+  - 格式：`Bearer {token}`
+- **技术细节**：
+  - 使用 Zustand 创建轻量级状态管理
+  - 支持在 React 组件中使用（Hook 方式）
+  - 支持在非 React 代码中使用（`getState()` 方法）
+  - 状态更新会自动触发组件重新渲染
 
 ---
 
@@ -1550,27 +1609,36 @@
 - React Query 自动处理缓存、重新获取、错误重试等
 
 ### 使用 Zustand 进行全局状态管理
-- 创建 Store 文件在 `store/` 目录（后续创建）
+- 创建 Store 文件在 `store/` 目录
 - 使用 `create` 函数创建 store
-- 示例：
+- **在 React 组件中使用**（Hook 方式）：
   ```typescript
-  import { create } from 'zustand';
+  import { useAuthStore } from '@/store/authStore';
   
-  interface AuthState {
-    user: User | null;
-    token: string | null;
-    login: (user: User, token: string) => void;
-    logout: () => void;
-  }
+  const { user, token, isAuthenticated, login, logout } = useAuthStore();
   
-  export const useAuthStore = create<AuthState>((set) => ({
-    user: null,
-    token: null,
-    login: (user, token) => set({ user, token }),
-    logout: () => set({ user: null, token: null }),
-  }));
+  // 登录
+  login(userData, tokenString);
+  
+  // 登出
+  logout();
   ```
-- 在组件中使用：`const { user, login } = useAuthStore();`
+- **在非 React 代码中使用**（如 API 拦截器）：
+  ```typescript
+  import { useAuthStore } from '@/store/authStore';
+  
+  // 使用 getState() 获取当前状态（非 Hook）
+  const token = useAuthStore.getState().token;
+  const user = useAuthStore.getState().user;
+  
+  // 调用 actions
+  useAuthStore.getState().logout();
+  ```
+- **注意事项**：
+  - 在 React 组件中必须使用 Hook 方式（`useAuthStore()`）
+  - 在非 React 代码中（如 API 拦截器、工具函数）使用 `getState()` 方法
+  - 状态更新会自动触发使用 Hook 的组件重新渲染
+  - Store 是全局单例，所有组件共享同一状态
 
 ### 使用 React Hook Form 管理表单
 - 与 React Native Paper 组件良好集成
