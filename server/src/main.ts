@@ -10,6 +10,18 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT') ?? 3000;
 
+  // 配置 CORS
+  const nodeEnv = configService.get<string>('NODE_ENV', 'development');
+  app.enableCors({
+    origin:
+      nodeEnv === 'production'
+        ? configService.get<string>('CORS_ORIGIN', 'http://localhost:3000')
+        : true, // 开发环境允许所有来源
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
+
   // 配置 API 版本控制
   app.enableVersioning({
     type: VersioningType.URI,

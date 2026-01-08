@@ -83,11 +83,20 @@
 - **作用**：应用入口文件，启动 NestJS 应用
 - **功能**：
   - 创建 NestJS 应用实例
+  - 配置 CORS（跨域资源共享）
   - 配置 API 版本控制
   - 配置全局验证管道（`ValidationPipe`）
   - 使用 `ConfigService` 读取环境变量中的端口配置
   - 监听端口（默认 3000，可通过 `.env` 中的 PORT 配置）
   - 启动 HTTP 服务器并输出启动信息
+- **CORS 配置**：
+  - 使用 `app.enableCors()` 启用跨域支持
+  - **开发环境**：`origin: true` - 允许所有来源，便于本地开发测试
+  - **生产环境**：从环境变量 `CORS_ORIGIN` 读取允许的来源，提高安全性
+  - `credentials: true` - 允许携带凭证（cookies、Authorization 头）
+  - `methods` - 允许的 HTTP 方法：GET, POST, PUT, DELETE, PATCH, OPTIONS
+  - `allowedHeaders` - 允许的请求头：Content-Type, Authorization
+  - 解决前端调用后端 API 时的跨域问题
 - **API 版本控制配置**：
   - `app.setGlobalPrefix('v1')` - 设置全局 API 前缀为 `/v1`
   - `app.enableVersioning()` - 启用版本控制
@@ -1177,6 +1186,10 @@
 #### 应用配置
 - `NODE_ENV` - 运行环境：`development` 或 `production`
 - `PORT` - 应用监听端口（默认：3000）
+- `CORS_ORIGIN` - CORS 允许的来源（生产环境使用，开发环境允许所有来源）
+  - 示例：`https://your-frontend-domain.com`
+  - 多个来源用逗号分隔
+  - 开发环境不需要配置，默认允许所有来源
 
 #### 数据库配置（已配置）
 - `DB_HOST` - 数据库主机地址（默认：localhost）
@@ -1309,6 +1322,53 @@
 - **作用**：应用首页组件
 - **路由**：对应根路径 `/`
 - **当前内容**：显示简单的欢迎界面
+
+#### `app/login.tsx`
+- **作用**：登录页面组件
+- **路由**：对应路径 `/login`
+- **功能**：
+  - 用户登录界面
+  - 表单验证和错误处理
+  - 登录成功后导航到主页
+- **UI 设计**：
+  - **主色调**：`#8fd460`（清新绿色）
+  - **背景色**：`#f8fbf6`（浅绿色背景）
+  - **文字颜色**：深绿色系（`#2c3e2d`、`#6b7c6d`）
+  - **错误颜色**：`#e57373`（友好的错误提示色）
+  - **布局**：居中表单，响应式设计，支持键盘避让
+- **表单字段**：
+  - **用户名/邮箱输入框**：
+    - 支持用户名或邮箱输入
+    - 必填验证
+    - 邮箱格式验证（如果输入包含 @）
+  - **密码输入框**：
+    - 安全文本输入（`secureTextEntry`）
+    - 必填验证
+    - 最小长度验证（至少 6 个字符）
+- **表单管理**：
+  - 使用 React Hook Form 管理表单状态
+  - 使用 Controller 组件包装 React Native Paper 的 TextInput
+  - 实时验证和错误提示
+- **错误处理**：
+  - **验证错误**：使用 HelperText 显示友好的中文提示
+  - **API 错误**：显示 API 返回的友好错误消息
+  - 错误信息显示在输入框下方或表单底部
+- **加载状态**：
+  - 登录按钮显示加载动画
+  - 登录时禁用所有输入框和按钮
+  - 按钮文本显示"登录中..."
+- **登录流程**：
+  1. 用户输入用户名/邮箱和密码
+  2. 前端验证通过后，调用 `login` API
+  3. 登录成功，更新 authStore（保存 user 和 token）
+  4. 使用 `router.replace('/')` 导航到主页
+  5. 后续 API 请求自动包含 token（通过请求拦截器）
+- **技术细节**：
+  - 使用 React Hook Form 进行表单管理
+  - 使用 React Native Paper 组件构建 UI
+  - 使用 Expo Router 的 `router` 进行导航
+  - 支持 iOS 和 Android 的键盘避让（KeyboardAvoidingView）
+  - 响应式布局，适配不同屏幕尺寸
 
 ---
 
@@ -1583,6 +1643,46 @@
 1. 在 `app/` 目录下创建新的 `.tsx` 文件
 2. 文件名对应路由路径（如 `app/about.tsx` 对应 `/about`）
 3. 导出默认组件
+
+### 页面导航
+- 使用 Expo Router 的 `router` 进行导航
+- 示例：
+  ```typescript
+  import { router } from 'expo-router';
+  
+  // 导航到指定页面
+  router.push('/login'); // 添加新页面到导航栈
+  router.replace('/'); // 替换当前页面（常用于登录后跳转）
+  router.back(); // 返回上一页
+  
+  // 登录成功后导航到主页
+  router.replace('/');
+  ```
+- **push vs replace**：
+  - `push`：添加新页面到导航栈，用户可以返回
+  - `replace`：替换当前页面，用户无法返回（常用于登录、注册后跳转）
+
+### 创建登录页面
+- 登录页面示例（`app/login.tsx`）：
+  - 使用 React Hook Form 管理表单
+  - 使用 React Native Paper 组件构建 UI
+  - 实现前端验证和友好错误提示
+  - 调用登录 API 并更新 authStore
+  - 登录成功后导航到主页
+- **关键代码**：
+  ```typescript
+  import { router } from 'expo-router';
+  import { login } from '@/services/auth';
+  import { useAuthStore } from '@/store/authStore';
+  
+  const { login: setAuth } = useAuthStore();
+  
+  const onSubmit = async (data) => {
+    const response = await login(data);
+    setAuth(response.user, response.accessToken);
+    router.replace('/'); // 登录成功后导航
+  };
+  ```
 
 ### 添加布局
 1. 创建 `_layout.tsx` 文件定义布局
