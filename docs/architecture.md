@@ -1312,6 +1312,102 @@
 
 ---
 
+### 服务目录（services/）
+
+#### `services/`
+- **作用**：存放 API 服务相关代码
+- **位置**：`mobile/services/`
+- **说明**：所有与后端 API 交互的代码都在此目录
+
+#### `services/api.ts`
+- **作用**：axios 实例配置和拦截器
+- **功能**：
+  - 创建并配置 axios 实例
+  - 设置基础 URL（从环境变量读取）
+  - 配置请求和响应拦截器
+  - 统一错误处理，转换为友好的中文错误消息
+- **配置内容**：
+  - **baseURL**：从 `EXPO_PUBLIC_API_URL` 环境变量读取，默认 `http://localhost:3000/v1`
+  - **timeout**：10 秒
+  - **headers**：`Content-Type: application/json`
+- **请求拦截器**：
+  - 开发环境打印请求日志（方法、URL、参数、数据）
+  - 预留了 token 添加位置（步骤 2.3 实现）
+- **响应拦截器**：
+  - 开发环境打印响应日志（状态码、响应数据）
+  - 直接返回 `response.data`（后端已使用统一格式）
+  - 统一错误处理：
+    - 识别后端统一错误格式（`{ success: false, error: { code, message } }`）
+    - 使用错误码映射转换为友好的中文消息
+    - 处理 HTTP 状态码错误（400, 401, 403, 404, 409, 500 等）
+    - 处理网络错误（无响应）
+    - 处理其他未知错误
+- **错误消息映射**：
+  - 与后端 `error-codes.ts` 中的错误码保持一致
+  - 覆盖所有已定义的错误码（AUTH、USER、DISH、VALIDATION、SYSTEM）
+  - 提供友好的中文错误消息
+- **错误对象属性**：
+  - `message`：友好的错误消息
+  - `code`：错误码（如果后端返回）
+  - `status`：HTTP 状态码
+  - `originalError`：原始错误对象（便于调试）
+- **使用方式**：
+  ```typescript
+  import api from '@/services/api';
+  
+  // GET 请求
+  const response = await api.get('/users/profile');
+  
+  // POST 请求
+  const response = await api.post('/users/register', { username, email, password });
+  
+  // 错误处理
+  try {
+    const response = await api.get('/users/profile');
+  } catch (error) {
+    console.error(error.message); // 友好的错误消息
+    console.error(error.code); // 错误码
+    console.error(error.status); // HTTP 状态码
+  }
+  ```
+
+---
+
+### 类型定义目录（types/）
+
+#### `types/`
+- **作用**：存放 TypeScript 类型定义
+- **位置**：`mobile/types/`
+- **说明**：所有共享的类型定义都在此目录
+
+#### `types/api.ts`
+- **作用**：API 相关类型定义
+- **包含内容**：
+  - `ApiErrorResponse`：错误响应格式接口
+    - `success: false`
+    - `error: { code: string, message: string }`
+    - `timestamp: string`
+    - `path: string`
+  - `ApiSuccessResponse<T>`：成功响应格式接口（支持泛型）
+    - `success: true`
+    - `data: T`（泛型，可以是任何类型）
+    - `message: string`
+  - `ApiResponse<T>`：响应类型（成功或错误的联合类型）
+- **与后端保持一致**：
+  - 类型定义与后端 `api-response.interface.ts` 保持一致
+  - 确保前后端类型同步
+- **使用方式**：
+  ```typescript
+  import type { ApiSuccessResponse, ApiErrorResponse } from '@/types/api';
+  
+  // 在函数中使用
+  async function getUser(): Promise<ApiSuccessResponse<User>> {
+    return await api.get('/users/profile');
+  }
+  ```
+
+---
+
 ### 资源目录（assets/）
 
 #### `assets/images/`
@@ -1400,6 +1496,43 @@
   ```typescript
   const apiUrl = process.env.EXPO_PUBLIC_API_URL;
   ```
+
+### 使用 API 服务
+- 所有 API 调用都通过 `services/api.ts` 中的 axios 实例
+- API 服务已配置好基础 URL、超时、错误处理等
+- 示例：
+  ```typescript
+  import api from '@/services/api';
+  
+  // GET 请求
+  const response = await api.get('/users/profile');
+  // response 已经是 response.data，包含 { success: true, data: {...}, message: '...' }
+  
+  // POST 请求
+  const response = await api.post('/users/register', {
+    username: 'zhangsan',
+    email: 'zhangsan@example.com',
+    password: 'password123',
+  });
+  
+  // 错误处理
+  try {
+    const response = await api.get('/users/profile');
+    console.log(response.data); // 访问数据
+  } catch (error: any) {
+    console.error(error.message); // 友好的错误消息（如"未授权，请先登录"）
+    console.error(error.code); // 错误码（如"AUTH_001"）
+    console.error(error.status); // HTTP 状态码（如 401）
+  }
+  ```
+- **错误处理**：
+  - 所有错误都会自动转换为友好的中文消息
+  - 错误对象包含 `message`（友好消息）、`code`（错误码）、`status`（HTTP 状态码）
+  - 网络错误会显示"网络连接失败，请检查网络设置"
+  - 开发环境会在控制台打印详细的错误日志
+- **开发环境日志**：
+  - 所有请求和响应都会在控制台打印（仅在开发环境）
+  - 包含请求方法、URL、参数、数据、响应状态码等
 
 ### 使用 React Query 进行数据获取
 - React Query 已在根布局中配置，所有组件都可以直接使用
