@@ -1220,6 +1220,12 @@
   - `react-native` - React Native 框架
   - `react-native-safe-area-context` - 安全区域上下文
   - `react-native-screens` - 原生屏幕组件
+  - `@tanstack/react-query` - React Query 数据获取和缓存库
+  - `zustand` - 轻量级状态管理库
+  - `axios` - HTTP 客户端库
+  - `react-hook-form` - 表单管理和验证库
+  - `react-native-paper` - Material Design UI 组件库
+  - `react-native-vector-icons` - 图标库
 
 #### `app.json`
 - **作用**：Expo 应用配置文件
@@ -1282,7 +1288,22 @@
   - 定义应用的根导航结构
   - 使用 `Stack` 导航器提供堆栈导航
   - 所有页面都在此布局下渲染
+  - 配置全局 Provider（React Query、React Native Paper）
 - **路由系统**：Expo Router 使用文件系统路由，`app/` 目录下的文件自动成为路由
+- **Provider 配置**：
+  - **QueryClientProvider**：React Query 的 Provider，提供数据获取和缓存功能
+    - 创建了 `QueryClient` 实例，配置了默认选项
+    - 默认选项：`retry: 1`（请求失败时重试 1 次），`refetchOnWindowFocus: false`（窗口聚焦时不自动重新获取）
+  - **PaperProvider**：React Native Paper 的 Provider，提供 Material Design UI 组件支持
+    - 包装整个应用，使所有页面都可以使用 React Native Paper 组件
+    - 提供主题支持（后续可以配置自定义主题）
+- **组件层次结构**：
+  ```
+  QueryClientProvider
+    └── PaperProvider
+        └── Stack (Expo Router)
+            └── 所有页面组件
+  ```
 
 #### `app/index.tsx`
 - **作用**：应用首页组件
@@ -1329,14 +1350,26 @@
 - 可复用组件放在 `components/` 目录（后续创建）
 - 使用 TypeScript 提供类型安全
 
-### 3. 样式管理
-- 使用 StyleSheet.create 创建样式
-- 保持样式简洁，避免过度装饰
-- 主色调：`#49aa19`（绿色）
+### 3. UI 组件和样式管理
+- **UI 组件库**：使用 React Native Paper 提供 Material Design 风格的组件
+  - 提供丰富的预构建组件（Button、Card、TextInput、Dialog 等）
+  - 支持主题定制和暗色模式
+  - 通过 `PaperProvider` 在根布局中配置
+- **表单管理**：使用 React Hook Form 进行表单状态管理和验证
+  - 减少表单相关的样板代码
+  - 提供高性能的表单验证
+  - 与 React Native Paper 组件良好集成
+- **样式管理**：
+  - 使用 StyleSheet.create 创建样式
+  - 保持样式简洁，避免过度装饰
+  - 主色调：`#49aa19`（绿色）
 
 ### 4. 状态管理
-- 后续将使用 Zustand 进行全局状态管理
-- 使用 React Query 进行数据获取和缓存
+- **全局状态**：使用 Zustand 进行全局状态管理（如用户认证状态、应用设置等）
+- **服务器状态**：使用 React Query 进行数据获取和缓存
+  - React Query 自动处理数据缓存、重新获取、错误重试等
+  - 减少手动状态管理代码，提高开发效率
+- **本地状态**：简单的 UI 状态使用 React 的 `useState` 或 `useReducer`
 
 ### 5. 环境变量管理
 - 使用 `.env` 文件管理环境变量
@@ -1367,6 +1400,78 @@
   ```typescript
   const apiUrl = process.env.EXPO_PUBLIC_API_URL;
   ```
+
+### 使用 React Query 进行数据获取
+- React Query 已在根布局中配置，所有组件都可以直接使用
+- 使用 `useQuery` 获取数据，使用 `useMutation` 进行数据修改
+- 示例：
+  ```typescript
+  import { useQuery } from '@tanstack/react-query';
+  import { api } from '@/services/api';
+  
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['dishes'],
+    queryFn: () => api.get('/dishes'),
+  });
+  ```
+- React Query 自动处理缓存、重新获取、错误重试等
+
+### 使用 Zustand 进行全局状态管理
+- 创建 Store 文件在 `store/` 目录（后续创建）
+- 使用 `create` 函数创建 store
+- 示例：
+  ```typescript
+  import { create } from 'zustand';
+  
+  interface AuthState {
+    user: User | null;
+    token: string | null;
+    login: (user: User, token: string) => void;
+    logout: () => void;
+  }
+  
+  export const useAuthStore = create<AuthState>((set) => ({
+    user: null,
+    token: null,
+    login: (user, token) => set({ user, token }),
+    logout: () => set({ user: null, token: null }),
+  }));
+  ```
+- 在组件中使用：`const { user, login } = useAuthStore();`
+
+### 使用 React Hook Form 管理表单
+- 与 React Native Paper 组件良好集成
+- 示例：
+  ```typescript
+  import { useForm, Controller } from 'react-hook-form';
+  import { TextInput, Button } from 'react-native-paper';
+  
+  const { control, handleSubmit } = useForm();
+  
+  <Controller
+    control={control}
+    name="username"
+    render={({ field }) => (
+      <TextInput
+        label="用户名"
+        value={field.value}
+        onChangeText={field.onChange}
+      />
+    )}
+  />
+  ```
+
+### 使用 React Native Paper 组件
+- 所有 Paper 组件都可以直接使用，无需额外配置
+- 示例：
+  ```typescript
+  import { Button, Card, TextInput } from 'react-native-paper';
+  
+  <Button mode="contained" onPress={handlePress}>
+    点击我
+  </Button>
+  ```
+- 支持主题定制（后续可以配置）
 
 ### 代码规范
 - 遵循 `.cursorrules` 中的规范

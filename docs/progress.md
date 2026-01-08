@@ -1333,3 +1333,55 @@ getProfile(@CurrentUser() user: JwtPayload) {
 
 ---
 
+## 阶段 2：前端基础
+
+### ✅ 2.1 安装和配置基础依赖（已完成）
+
+**完成时间**：2025年12月31日
+
+**完成内容**：
+1. 安装了所有必需的前端依赖库
+2. 配置了 React Query Provider
+3. 配置了 React Native Paper Provider
+4. 验证了所有依赖的导入
+
+**安装的依赖包**：
+- `@tanstack/react-query` (^5.90.16) - React Query 数据获取和缓存库
+- `zustand` (^5.0.9) - 轻量级状态管理库
+- `axios` (^1.13.2) - HTTP 客户端库
+- `react-hook-form` (^7.70.0) - 表单管理和验证库
+- `react-native-paper` (^5.14.5) - Material Design UI 组件库
+- `react-native-vector-icons` (^10.3.0) - 图标库
+
+**修改的文件**：
+- `mobile/package.json` - 添加了所有依赖包
+- `mobile/app/_layout.tsx` - 配置了 React Query 和 React Native Paper 的 Provider
+
+**Provider 配置详情**：
+- **QueryClientProvider**：
+  - 创建了 `QueryClient` 实例
+  - 配置了默认选项：
+    - `retry: 1` - 请求失败时重试 1 次
+    - `refetchOnWindowFocus: false` - 窗口聚焦时不自动重新获取数据
+- **PaperProvider**：
+  - 包装了应用，使 React Native Paper 组件可以在整个应用中使用
+  - 提供了 Material Design 主题支持
+
+**技术细节**：
+- React Query 版本：5.90.16（最新版本）
+- Zustand 版本：5.0.9（最新版本）
+- React Hook Form 版本：7.70.0
+- React Native Paper 版本：5.14.5
+- 所有 Provider 在根布局 `_layout.tsx` 中配置，确保整个应用都可以使用这些功能
+- Expo Router 已配置（之前已完成）
+
+**验证结果**：
+- ✅ 运行 `pnpm install`，所有依赖成功安装
+- ✅ 导入主要库，无导入错误（已在 `_layout.tsx` 中验证）
+- ✅ 运行 `pnpm run lint`，代码检查通过
+- ⏳ 运行应用，应无运行时错误（需要用户验证）
+
+**下一步**：2.2 创建 API 服务基础结构
+
+---
+
