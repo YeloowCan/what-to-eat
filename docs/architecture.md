@@ -1374,6 +1374,48 @@
   }
   ```
 
+#### `services/auth.ts`
+- **作用**：认证相关 API 服务
+- **功能**：
+  - 提供用户登录 API 调用
+  - 定义登录相关的类型接口
+  - 与后端认证 API 交互
+- **包含内容**：
+  - `LoginRequest` 接口：登录请求参数
+    - `usernameOrEmail: string` - 用户名或邮箱
+    - `password: string` - 密码
+  - `LoginResponseData` 接口：登录响应数据
+    - `accessToken: string` - JWT token
+    - `user: User` - 用户信息
+  - `login()` 函数：登录 API 调用
+    - 参数：`LoginRequest`
+    - 返回：`Promise<LoginResponseData>`
+    - 端点：`POST /v1/auth/login`
+- **使用方式**：
+  ```typescript
+  import { login } from '@/services/auth';
+  
+  try {
+    const { accessToken, user } = await login({
+      usernameOrEmail: 'zhangsan',
+      password: 'password123',
+    });
+    
+    // 使用 token 和用户信息
+    console.log('Token:', accessToken);
+    console.log('User:', user);
+  } catch (error: any) {
+    console.error(error.message); // 友好的错误消息（如"用户名或密码错误"）
+  }
+  ```
+- **错误处理**：
+  - 自动使用 API 服务的统一错误处理机制
+  - 错误消息已转换为友好的中文提示
+  - 支持用户名或邮箱登录（后端已实现）
+- **与 authStore 集成**：
+  - 返回的 `user` 类型与 `authStore` 中的 `User` 接口一致
+  - 返回的 `accessToken` 可以直接用于 `authStore.login()` 方法
+
 ---
 
 ### 类型定义目录（types/）
@@ -1592,6 +1634,29 @@
 - **开发环境日志**：
   - 所有请求和响应都会在控制台打印（仅在开发环境）
   - 包含请求方法、URL、参数、数据、响应状态码等
+
+### 使用认证 API 服务
+- 认证相关的 API 调用在 `services/auth.ts` 中
+- 示例（登录）：
+  ```typescript
+  import { login } from '@/services/auth';
+  import { useAuthStore } from '@/store/authStore';
+  
+  try {
+    const { accessToken, user } = await login({
+      usernameOrEmail: 'zhangsan',
+      password: 'password123',
+    });
+    
+    // 登录成功后，更新 authStore
+    useAuthStore.getState().login(user, accessToken);
+  } catch (error: any) {
+    console.error(error.message); // 友好的错误消息（如"用户名或密码错误"）
+  }
+  ```
+- **与 authStore 集成**：
+  - 登录成功后，使用 `authStore.login(user, accessToken)` 更新状态
+  - 之后所有 API 请求会自动包含 token（通过请求拦截器）
 
 ### 使用 React Query 进行数据获取
 - React Query 已在根布局中配置，所有组件都可以直接使用

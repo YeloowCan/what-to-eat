@@ -1513,3 +1513,78 @@ getProfile(@CurrentUser() user: JwtPayload) {
 
 ---
 
+### ✅ 2.4 创建认证 Store（Zustand）（已完成）
+
+**完成时间**：2025年12月31日
+
+**说明**：此步骤已在步骤 2.3 中提前完成，这里标记为完成状态。
+
+**完成内容**：
+1. 创建了 `store/authStore.ts` 文件
+2. 定义了状态：user, token, isAuthenticated
+3. 实现了 actions：login, logout, setUser
+
+**验证结果**：
+- ✅ 在组件中使用 store，能读取初始状态
+- ✅ 调用 login action，状态能更新
+- ✅ 调用 logout action，状态能清空
+- ⏳ 使用 React DevTools 检查状态变化（需要用户验证）
+
+**下一步**：2.5 实现登录 API 调用
+
+---
+
+### ✅ 2.5 实现登录 API 调用（已完成）
+
+**完成时间**：2025年12月31日
+
+**完成内容**：
+1. 创建了 `services/auth.ts` 文件
+2. 实现了 `login` 函数，调用后端 `/auth/login` 端点
+3. 定义了 `LoginRequest` 和 `LoginResponseData` 接口
+4. 返回 token 和用户信息
+
+**创建的文件和目录**：
+- `mobile/services/auth.ts` - 认证相关 API 服务
+
+**API 调用详情**：
+- **端点**：`POST /v1/auth/login`（baseURL 已在 api.ts 中配置）
+- **请求参数**：`LoginRequest`
+  - `usernameOrEmail: string` - 用户名或邮箱
+  - `password: string` - 密码
+- **响应格式**：`ApiSuccessResponse<LoginResponseData>`
+  - `success: true`
+  - `data: { accessToken: string, user: User }`
+  - `message: string`
+- **返回数据**：直接返回 `response.data`（即 `{ accessToken, user }`）
+
+**类型定义**：
+- `LoginRequest`：登录请求参数接口
+- `LoginResponseData`：登录响应数据接口
+  - `accessToken: string` - JWT token
+  - `user: User` - 用户信息（与 authStore 中的 User 接口一致）
+
+**功能特性**：
+- 类型安全：使用 TypeScript 接口确保类型正确
+- 错误处理：自动使用 API 服务的统一错误处理机制
+- 返回格式：直接返回 data 字段，简化使用
+- 与后端一致：请求和响应格式与后端 API 保持一致
+
+**技术细节**：
+- 使用 `api.post()` 方法发送 POST 请求
+- 响应拦截器自动处理统一响应格式
+- 错误会自动转换为友好的中文消息
+- 支持用户名或邮箱登录（后端已实现）
+
+**验证结果**：
+- ✅ 创建了 `services/auth.ts` 文件
+- ✅ 实现了 `login` 函数
+- ✅ 定义了类型接口
+- ⏳ 使用正确凭据调用，应返回 token 和用户信息（需要用户验证）
+- ⏳ 使用错误凭据调用，应抛出包含友好错误消息的 Error（需要用户验证）
+- ⏳ 检查网络请求，应发送到正确的端点 `/v1/auth/login`（需要用户验证）
+
+**下一步**：2.6 实现登录页面 UI（含前端验证和友好错误）
+
+---
+
