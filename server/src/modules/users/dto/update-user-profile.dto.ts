@@ -56,4 +56,3 @@ export class UpdateUserProfileDto {
   @IsOptional()
   gender?: Gender; // 性别
 }
-

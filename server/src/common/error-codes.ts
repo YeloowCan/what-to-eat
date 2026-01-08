@@ -61,4 +61,3 @@ export const ErrorMessages: Record<ErrorCode, string> = {
   [ErrorCode.SYSTEM_002]: '数据库连接错误',
   [ErrorCode.SYSTEM_003]: '资源未找到',
 };
-

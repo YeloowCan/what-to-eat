@@ -17,4 +17,3 @@ export const AppDataSource = new DataSource({
   synchronize: false, // 迁移时禁用 synchronize
   logging: process.env.NODE_ENV === 'development',
 });
-

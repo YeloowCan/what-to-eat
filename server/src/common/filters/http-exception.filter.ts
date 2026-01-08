@@ -187,7 +187,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
     // 在生产环境中，可以进一步处理消息，移除技术细节
     if (process.env.NODE_ENV === 'production') {
       // 生产环境：如果消息包含技术细节，使用通用消息
-      if (originalMessage.includes('stack') || originalMessage.includes('Error:')) {
+      if (
+        originalMessage.includes('stack') ||
+        originalMessage.includes('Error:')
+      ) {
         return ErrorMessages[ErrorCode.SYSTEM_001];
       }
     }
@@ -195,4 +198,3 @@ export class HttpExceptionFilter implements ExceptionFilter {
     return originalMessage;
   }
 }
-

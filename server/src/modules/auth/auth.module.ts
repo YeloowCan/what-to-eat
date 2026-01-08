@@ -11,4 +11,3 @@ import { JwtModule } from './jwt/jwt.module';
   exports: [AuthService],
 })
 export class AuthModule {}
-

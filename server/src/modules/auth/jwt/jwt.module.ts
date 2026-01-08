@@ -26,4 +26,3 @@ import { JwtAuthGuard } from './jwt-auth.guard';
   exports: [NestJwtModule, PassportModule, JwtAuthGuard],
 })
 export class JwtModule {}
-
