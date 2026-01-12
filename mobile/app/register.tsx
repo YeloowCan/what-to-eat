@@ -3,7 +3,8 @@ import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 're
 import { useForm, Controller } from 'react-hook-form';
 import { TextInput, Button, Text, HelperText } from 'react-native-paper';
 import { router } from 'expo-router';
-import { register } from '../services/auth';
+import { register, login } from '../services/auth';
+import { useAuthStore } from '../store/authStore';
 
 // 主题颜色
 const PRIMARY_COLOR = '#8fd460';
@@ -25,6 +26,7 @@ interface RegisterFormData {
 export default function RegisterScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const { login: setAuth } = useAuthStore();
 
   const {
     control,
@@ -66,14 +68,30 @@ export default function RegisterScreen() {
       setIsLoading(true);
       setApiError(null);
 
-      const response = await register({
+      // 1. 调用注册 API
+      await register({
         username: data.username.trim(),
         email: data.email.trim(),
         password: data.password,
       });
 
-      // 注册成功，跳转到登录页
-      router.replace('/login');
+      // 2. 注册成功后，自动登录
+      try {
+        const loginResponse = await login({
+          usernameOrEmail: data.username.trim(),
+          password: data.password,
+        });
+
+        // 3. 登录成功，更新 authStore
+        setAuth(loginResponse.user, loginResponse.accessToken);
+
+        // 4. 跳转到主页
+        router.replace('/');
+      } catch (loginError: any) {
+        // 自动登录失败，跳转到登录页（让用户手动登录）
+        // 这种情况很少发生，但为了健壮性还是处理一下
+        router.replace('/login');
+      }
     } catch (error: any) {
       // 显示友好的错误消息
       setApiError(error.message || '注册失败，请稍后重试');
