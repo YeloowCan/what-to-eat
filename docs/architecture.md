@@ -1370,6 +1370,63 @@
   - 支持 iOS 和 Android 的键盘避让（KeyboardAvoidingView）
   - 响应式布局，适配不同屏幕尺寸
 
+#### `app/register.tsx`
+- **作用**：注册页面组件
+- **路由**：对应路径 `/register`
+- **功能**：
+  - 用户注册界面
+  - 表单验证和错误处理
+  - 注册成功后跳转到登录页
+- **UI 设计**：
+  - **主色调**：`#8fd460`（清新绿色，与登录页一致）
+  - **背景色**：`#f8fbf6`（浅绿色背景）
+  - **文字颜色**：深绿色系（`#2c3e2d`、`#6b7c6d`）
+  - **错误颜色**：`#e57373`（友好的错误提示色）
+  - **布局**：居中表单，响应式设计，支持键盘避让
+  - **登录链接**：底部显示"已有账户？立即登录"链接
+- **表单字段**：
+  - **用户名输入框**：
+    - 必填验证
+    - 最小长度验证（至少 3 个字符）
+    - 最大长度验证（不超过 50 个字符）
+  - **邮箱输入框**：
+    - 必填验证
+    - 邮箱格式验证（使用正则表达式）
+  - **密码输入框**：
+    - 安全文本输入（`secureTextEntry`）
+    - 必填验证
+    - 最小长度验证（至少 6 个字符）
+  - **确认密码输入框**：
+    - 安全文本输入（`secureTextEntry`）
+    - 必填验证
+    - 密码匹配验证（必须与密码字段一致）
+- **表单管理**：
+  - 使用 React Hook Form 管理表单状态
+  - 使用 `watch()` 监听密码字段，实现密码匹配验证
+  - 使用 Controller 组件包装 React Native Paper 的 TextInput
+  - 实时验证和错误提示
+  - 自定义验证函数：`validateEmail()` 和 `validatePasswordMatch()`
+- **错误处理**：
+  - **验证错误**：使用 HelperText 显示友好的中文提示
+  - **API 错误**：显示 API 返回的友好错误消息（如"用户名已存在"、"邮箱已被注册"）
+  - 错误信息显示在输入框下方或表单底部
+- **加载状态**：
+  - 注册按钮显示加载动画
+  - 注册时禁用所有输入框和按钮
+  - 按钮文本显示"注册中..."
+- **注册流程**：
+  1. 用户输入用户名、邮箱、密码、确认密码
+  2. 前端验证通过后，调用 `register` API
+  3. 注册成功，使用 `router.replace('/login')` 跳转到登录页
+  4. 用户可以在登录页使用新注册的账户登录
+- **技术细节**：
+  - 使用 React Hook Form 进行表单管理
+  - 使用 `watch()` 监听字段值变化，实现密码匹配验证
+  - 使用 React Native Paper 组件构建 UI
+  - 使用 Expo Router 的 `router` 进行导航
+  - 支持 iOS 和 Android 的键盘避让（KeyboardAvoidingView）
+  - 响应式布局，适配不同屏幕尺寸
+
 ---
 
 ### 服务目录（services/）
@@ -1437,24 +1494,42 @@
 #### `services/auth.ts`
 - **作用**：认证相关 API 服务
 - **功能**：
-  - 提供用户登录 API 调用
-  - 定义登录相关的类型接口
+  - 提供用户登录和注册 API 调用
+  - 定义认证相关的类型接口
   - 与后端认证 API 交互
 - **包含内容**：
-  - `LoginRequest` 接口：登录请求参数
-    - `usernameOrEmail: string` - 用户名或邮箱
-    - `password: string` - 密码
-  - `LoginResponseData` 接口：登录响应数据
-    - `accessToken: string` - JWT token
-    - `user: User` - 用户信息
-  - `login()` 函数：登录 API 调用
-    - 参数：`LoginRequest`
-    - 返回：`Promise<LoginResponseData>`
-    - 端点：`POST /v1/auth/login`
+  - **登录相关**：
+    - `LoginRequest` 接口：登录请求参数
+      - `usernameOrEmail: string` - 用户名或邮箱
+      - `password: string` - 密码
+    - `LoginResponseData` 接口：登录响应数据
+      - `accessToken: string` - JWT token
+      - `user: User` - 用户信息
+    - `login()` 函数：登录 API 调用
+      - 参数：`LoginRequest`
+      - 返回：`Promise<LoginResponseData>`
+      - 端点：`POST /v1/auth/login`
+  - **注册相关**：
+    - `RegisterRequest` 接口：注册请求参数
+      - `username: string` - 用户名（3-50 字符）
+      - `email: string` - 邮箱（邮箱格式）
+      - `password: string` - 密码（至少 6 字符）
+    - `RegisterResponseData` 接口：注册响应数据
+      - `id: number` - 用户 ID
+      - `username: string` - 用户名
+      - `email: string` - 邮箱
+      - `profile: User['profile']` - 用户资料（初始为 null）
+      - `createdAt: string` - 创建时间
+      - `updatedAt: string` - 更新时间
+    - `register()` 函数：注册 API 调用
+      - 参数：`RegisterRequest`
+      - 返回：`Promise<RegisterResponseData>`
+      - 端点：`POST /v1/users/register`
 - **使用方式**：
   ```typescript
-  import { login } from '@/services/auth';
+  import { login, register } from '@/services/auth';
   
+  // 登录
   try {
     const { accessToken, user } = await login({
       usernameOrEmail: 'zhangsan',
@@ -1467,14 +1542,30 @@
   } catch (error: any) {
     console.error(error.message); // 友好的错误消息（如"用户名或密码错误"）
   }
+  
+  // 注册
+  try {
+    const user = await register({
+      username: 'zhangsan',
+      email: 'zhangsan@example.com',
+      password: 'password123',
+    });
+    
+    // 注册成功，跳转到登录页
+    console.log('User:', user);
+  } catch (error: any) {
+    console.error(error.message); // 友好的错误消息（如"用户名已存在"）
+  }
   ```
 - **错误处理**：
   - 自动使用 API 服务的统一错误处理机制
   - 错误消息已转换为友好的中文提示
   - 支持用户名或邮箱登录（后端已实现）
+  - 注册错误包括：用户名已存在、邮箱已被注册、验证失败等
 - **与 authStore 集成**：
-  - 返回的 `user` 类型与 `authStore` 中的 `User` 接口一致
-  - 返回的 `accessToken` 可以直接用于 `authStore.login()` 方法
+  - 登录返回的 `user` 类型与 `authStore` 中的 `User` 接口一致
+  - 登录返回的 `accessToken` 可以直接用于 `authStore.login()` 方法
+  - 注册成功后需要用户手动登录（跳转到登录页）
 
 ---
 
