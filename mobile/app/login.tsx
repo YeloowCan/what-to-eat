@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { TextInput, Button, Text, HelperText } from 'react-native-paper';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { login } from '../services/auth';
 import { useAuthStore } from '../store/authStore';
 
@@ -25,6 +25,7 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const { login: setAuth } = useAuthStore();
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
 
   const {
     control,
@@ -65,8 +66,9 @@ export default function LoginScreen() {
       // 登录成功，更新 authStore
       setAuth(response.user, response.accessToken);
 
-      // 导航到主页
-      router.replace('/');
+      // 导航到指定页面或主页
+      const targetPath = returnTo && typeof returnTo === 'string' ? returnTo : '/';
+      router.replace(targetPath as any);
     } catch (error: any) {
       // 显示友好的错误消息
       setApiError(error.message || '登录失败，请稍后重试');

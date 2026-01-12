@@ -1843,3 +1843,90 @@ getProfile(@CurrentUser() user: JwtPayload) {
 
 ---
 
+### ✅ 2.10 创建受保护路由守卫（已完成）
+
+**完成时间**：2025年12月31日
+
+**完成内容**：
+1. 创建了路由守卫 Hook (`hooks/useAuthGuard.ts`)
+2. 在首页应用了路由守卫作为示例
+3. 更新了登录页面，支持登录后返回到之前的页面
+
+**创建/修改的文件**：
+- `mobile/hooks/useAuthGuard.ts` - 新建：路由守卫 Hook
+- `mobile/app/index.tsx` - 修改：应用路由守卫
+- `mobile/app/login.tsx` - 修改：支持登录后返回到之前的页面
+
+**路由守卫 Hook 详情**：
+- **Hook 名称**：`useAuthGuard()`
+- **功能**：
+  - 检查用户是否已认证（从 authStore 读取 `isAuthenticated`）
+  - 未认证时自动重定向到登录页
+  - 支持传递返回路径参数，登录后可返回到原页面
+- **使用方式**：
+  ```typescript
+  import { useAuthGuard } from '../hooks/useAuthGuard';
+  
+  export default function ProtectedPage() {
+    const isAuthenticated = useAuthGuard();
+    
+    if (!isAuthenticated) {
+      return null; // 重定向中，不渲染内容
+    }
+    
+    // 页面内容
+  }
+  ```
+- **技术实现**：
+  - 使用 `useAuthStore()` Hook 获取认证状态
+  - 使用 `useSegments()` Hook 获取当前路由路径
+  - 使用 `useEffect` 监听认证状态变化
+  - 使用 `router.replace()` 进行重定向
+  - 通过路由参数传递返回路径（`returnTo`）
+
+**登录页面更新**：
+- 支持从路由参数中获取 `returnTo` 参数
+- 登录成功后，如果有 `returnTo` 参数，则返回到该页面
+- 如果没有 `returnTo` 参数，则默认跳转到主页
+- 使用 `useLocalSearchParams()` Hook 获取路由参数
+
+**首页更新**：
+- 应用了路由守卫，未认证时自动重定向到登录页
+- 登录后可以正常访问首页
+- 作为受保护页面的示例
+
+**功能特性**：
+- **自动重定向**：未认证时自动重定向到登录页，无需手动检查
+- **返回路径**：记录用户访问的页面，登录后自动返回到原页面
+- **易于使用**：在需要保护的页面中调用 `useAuthGuard()` Hook 即可
+- **类型安全**：使用 TypeScript 确保类型正确
+- **用户体验**：登录后自动返回到之前访问的页面，提升用户体验
+
+**工作流程**：
+1. 用户访问受保护的页面
+2. `useAuthGuard()` Hook 检查认证状态
+3. 如果未认证：
+   - 获取当前页面路径
+   - 重定向到登录页，并传递 `returnTo` 参数
+4. 用户在登录页登录
+5. 登录成功后，如果有 `returnTo` 参数，则返回到该页面
+6. 如果没有 `returnTo` 参数，则跳转到主页
+
+**技术细节**：
+- 使用 Expo Router 的 `useSegments()` Hook 获取当前路由路径
+- 使用 Expo Router 的 `router.replace()` 进行导航
+- 使用 Expo Router 的 `useLocalSearchParams()` 获取路由参数
+- 使用 `useEffect` 监听认证状态变化，自动重定向
+- 返回 `isAuthenticated` 布尔值，方便组件判断是否渲染内容
+
+**验证结果**：
+- ✅ 未登录时访问首页，自动重定向到登录页
+- ✅ 登录后访问首页，正常显示
+- ✅ 登出后访问首页，自动重定向到登录页
+- ✅ 从受保护页面重定向到登录页后，登录成功返回到原页面
+- ✅ 路由守卫 Hook 易于使用，只需在受保护页面中调用即可
+
+**下一步**：2.11 实现用户信息获取和显示（含骨架屏）
+
+---
+

@@ -1321,7 +1321,14 @@
 #### `app/index.tsx`
 - **作用**：应用首页组件
 - **路由**：对应根路径 `/`
-- **当前内容**：显示简单的欢迎界面
+- **功能**：
+  - 受保护的首页（需要登录才能访问）
+  - 应用路由守卫，未认证时自动重定向到登录页
+  - 显示简单的欢迎界面
+- **路由守卫**：
+  - 使用 `useAuthGuard()` Hook 保护页面
+  - 未认证时自动重定向到登录页
+  - 登录后可以正常访问
 
 #### `app/login.tsx`
 - **作用**：登录页面组件
@@ -1361,12 +1368,20 @@
   1. 用户输入用户名/邮箱和密码
   2. 前端验证通过后，调用 `login` API
   3. 登录成功，更新 authStore（保存 user 和 token）
-  4. 使用 `router.replace('/')` 导航到主页
-  5. 后续 API 请求自动包含 token（通过请求拦截器）
+  4. 检查是否有 `returnTo` 参数（从路由参数获取）
+  5. 如果有 `returnTo` 参数，则返回到该页面
+  6. 如果没有 `returnTo` 参数，则跳转到主页（`router.replace('/')`）
+  7. 后续 API 请求自动包含 token（通过请求拦截器）
+- **返回路径功能**：
+  - 支持从路由参数中获取 `returnTo` 参数
+  - 登录成功后，如果有 `returnTo` 参数，则返回到该页面
+  - 如果没有 `returnTo` 参数，则默认跳转到主页
+  - 使用 `useLocalSearchParams()` Hook 获取路由参数
 - **技术细节**：
   - 使用 React Hook Form 进行表单管理
   - 使用 React Native Paper 组件构建 UI
   - 使用 Expo Router 的 `router` 进行导航
+  - 使用 `useLocalSearchParams()` Hook 获取路由参数（`returnTo`）
   - 支持 iOS 和 Android 的键盘避让（KeyboardAvoidingView）
   - 响应式布局，适配不同屏幕尺寸
 
@@ -1437,6 +1452,56 @@
   - 保持加载状态直到整个流程完成（注册 + 自动登录）
   - 支持 iOS 和 Android 的键盘避让（KeyboardAvoidingView）
   - 响应式布局，适配不同屏幕尺寸
+
+---
+
+### Hooks 目录（hooks/）
+
+#### `hooks/`
+- **作用**：存放自定义 React Hooks
+- **位置**：`mobile/hooks/`
+- **说明**：所有可复用的自定义 Hooks 都在此目录
+
+#### `hooks/useAuthGuard.ts`
+- **作用**：受保护路由守卫 Hook
+- **功能**：
+  - 检查用户是否已认证（从 authStore 读取 `isAuthenticated`）
+  - 未认证时自动重定向到登录页
+  - 支持传递返回路径参数，登录后可返回到原页面
+- **使用方式**：
+  ```typescript
+  import { useAuthGuard } from '../hooks/useAuthGuard';
+  
+  export default function ProtectedPage() {
+    const isAuthenticated = useAuthGuard();
+    
+    if (!isAuthenticated) {
+      return null; // 重定向中，不渲染内容
+    }
+    
+    // 页面内容
+  }
+  ```
+- **工作流程**：
+  1. 使用 `useAuthStore()` Hook 获取认证状态
+  2. 使用 `useSegments()` Hook 获取当前路由路径
+  3. 使用 `useEffect` 监听认证状态变化
+  4. 如果未认证：
+     - 获取当前页面路径
+     - 使用 `router.replace()` 重定向到登录页，并传递 `returnTo` 参数
+  5. 返回 `isAuthenticated` 布尔值，方便组件判断是否渲染内容
+- **技术细节**：
+  - 使用 Expo Router 的 `useSegments()` Hook 获取当前路由路径
+  - 使用 Expo Router 的 `router.replace()` 进行导航
+  - 使用 `useEffect` 监听认证状态变化，自动重定向
+  - 通过路由参数传递返回路径（`returnTo`）
+  - 返回 `isAuthenticated` 布尔值，方便组件判断
+- **优势**：
+  - **易于使用**：只需在受保护页面中调用 Hook 即可
+  - **自动重定向**：未认证时自动重定向，无需手动检查
+  - **返回路径**：记录用户访问的页面，登录后自动返回
+  - **类型安全**：使用 TypeScript 确保类型正确
+  - **用户体验**：登录后自动返回到之前访问的页面
 
 ---
 
