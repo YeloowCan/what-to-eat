@@ -1453,6 +1453,54 @@
   - 支持 iOS 和 Android 的键盘避让（KeyboardAvoidingView）
   - 响应式布局，适配不同屏幕尺寸
 
+#### `app/profile.tsx`
+- **作用**：个人中心页面组件
+- **路由**：对应路径 `/profile`
+- **功能**：
+  - 显示当前登录用户的完整信息
+  - 显示用户资料（身高、体重、年龄、性别）
+  - 应用路由守卫，未认证时自动重定向
+  - 实现骨架屏，数据加载时显示占位符
+  - 处理错误状态，显示友好的错误信息
+- **UI 设计**：
+  - **主色调**：`#8fd460`（清新绿色，与应用主题一致）
+  - **背景色**：`#f8fbf6`（浅绿色背景）
+  - **卡片设计**：使用 Material Design 卡片组件
+  - **头像设计**：圆形头像，显示用户名首字母
+  - **资料展示**：列表形式，清晰展示各项资料
+- **用户信息显示**：
+  - **头像**：圆形头像，显示用户名首字母（大写）
+  - **用户名**：大号字体，加粗显示
+  - **邮箱**：中等字体，次要颜色
+- **用户资料显示**：
+  - **身高**：显示为 "XXX cm" 或 "未设置"
+  - **体重**：显示为 "XXX kg" 或 "未设置"
+  - **年龄**：显示为 "XXX 岁" 或 "未设置"
+  - **性别**：显示为 "男"、"女" 或 "未设置"
+- **骨架屏实现**：
+  - 使用自定义组件 `SkeletonLoader`
+  - 模拟真实内容布局（头像、文本行）
+  - 使用灰色占位符，提供视觉反馈
+  - 在数据加载时显示，避免空白页面
+- **错误处理**：
+  - **网络错误**：显示友好的错误消息和返回按钮
+  - **用户不存在**：显示提示信息和返回按钮
+  - **错误消息**：使用 API 返回的友好错误消息（不是技术错误）
+- **空状态处理**：
+  - 无用户资料时显示提示信息："暂无个人资料，请完善您的信息"
+- **技术细节**：
+  - 使用 `useAuthGuard()` Hook 保护页面
+  - 使用 `useUser()` Hook 获取用户信息
+  - 使用 React Query 进行数据获取和缓存
+  - 使用 React Native Paper 组件构建 UI
+  - 使用 Expo Router 进行路由管理
+  - 响应式布局，适配不同屏幕尺寸
+- **状态处理**：
+  - **加载状态**：显示骨架屏
+  - **错误状态**：显示错误信息和返回按钮
+  - **成功状态**：显示用户信息和资料
+  - **空状态**：无资料时显示提示信息
+
 ---
 
 ### Hooks 目录（hooks/）
@@ -1483,25 +1531,79 @@
   }
   ```
 - **工作流程**：
-  1. 使用 `useAuthStore()` Hook 获取认证状态
-  2. 使用 `useSegments()` Hook 获取当前路由路径
-  3. 使用 `useEffect` 监听认证状态变化
-  4. 如果未认证：
+  1. 使用 `useState` 标记组件挂载状态（`isMounted`）
+  2. 使用 `useAuthStore()` Hook 获取认证状态
+  3. 使用 `useSegments()` Hook 获取当前路由路径
+  4. 使用 `useEffect` 监听认证状态变化
+  5. 如果未认证且组件已挂载：
+     - 使用 `setTimeout` 延迟执行导航（避免在 Root Layout 挂载前导航）
      - 获取当前页面路径
      - 使用 `router.replace()` 重定向到登录页，并传递 `returnTo` 参数
-  5. 返回 `isAuthenticated` 布尔值，方便组件判断是否渲染内容
+  6. 返回 `isAuthenticated` 布尔值，方便组件判断是否渲染内容
 - **技术细节**：
+  - 使用 `useState` 管理组件挂载状态，确保只在组件挂载后执行导航
+  - 使用 `setTimeout` 延迟执行导航，避免在 Root Layout 挂载前导航
+  - 添加错误处理，捕获导航错误（try-catch）
   - 使用 Expo Router 的 `useSegments()` Hook 获取当前路由路径
   - 使用 Expo Router 的 `router.replace()` 进行导航
-  - 使用 `useEffect` 监听认证状态变化，自动重定向
   - 通过路由参数传递返回路径（`returnTo`）
   - 返回 `isAuthenticated` 布尔值，方便组件判断
+- **问题修复**：
+  - **问题**：在 Root Layout 挂载前尝试导航导致 "Attempted to navigate before mounting the Root Layout component" 错误
+  - **解决方案**：
+    - 添加 `isMounted` 状态，确保组件已挂载
+    - 使用 `setTimeout` 延迟执行导航，避免在挂载前导航
+    - 添加错误处理，捕获导航错误
 - **优势**：
   - **易于使用**：只需在受保护页面中调用 Hook 即可
   - **自动重定向**：未认证时自动重定向，无需手动检查
   - **返回路径**：记录用户访问的页面，登录后自动返回
   - **类型安全**：使用 TypeScript 确保类型正确
   - **用户体验**：登录后自动返回到之前访问的页面
+  - **稳定性**：解决了 Root Layout 挂载前导航的问题
+
+#### `hooks/useUser.ts`
+- **作用**：获取当前用户信息的 React Query Hook
+- **功能**：
+  - 使用 React Query 获取用户信息
+  - 自动处理加载状态、错误状态和缓存
+  - 配置缓存策略和重试策略
+- **使用方式**：
+  ```typescript
+  import { useUser } from '../hooks/useUser';
+  
+  const { data: user, isLoading, error } = useUser();
+  
+  if (isLoading) {
+    return <SkeletonLoader />;
+  }
+  
+  if (error) {
+    return <ErrorMessage error={error} />;
+  }
+  
+  return <UserInfo user={user} />;
+  ```
+- **配置选项**：
+  - `queryKey: ['user', 'profile']` - 查询键，用于缓存
+  - `queryFn: getCurrentUser` - 查询函数，调用 API 获取用户信息
+  - `enabled: true` - 始终启用查询（由路由守卫控制是否显示页面）
+  - `staleTime: 5 * 60 * 1000` - 5 分钟内数据视为新鲜，不重新获取
+  - `retry: 1` - 失败时重试 1 次
+- **返回数据**：
+  - `data: User | undefined` - 用户信息（加载成功时）
+  - `isLoading: boolean` - 是否正在加载
+  - `error: Error | null` - 错误信息（加载失败时）
+  - 其他 React Query 标准返回值
+- **技术细节**：
+  - 使用 `useQuery` Hook 进行数据获取
+  - 自动处理缓存、重新获取、错误重试等
+  - 与 React Query Provider 集成（在根布局中配置）
+- **优势**：
+  - **自动缓存**：数据自动缓存，减少不必要的 API 调用
+  - **加载状态**：自动提供加载状态，方便显示骨架屏
+  - **错误处理**：自动处理错误状态，方便显示错误信息
+  - **类型安全**：使用 TypeScript 确保类型正确
 
 ---
 
@@ -1566,6 +1668,31 @@
     console.error(error.status); // HTTP 状态码
   }
   ```
+
+#### `services/users.ts`
+- **作用**：用户相关 API 服务
+- **功能**：
+  - 提供获取用户信息的 API 调用
+  - 与后端用户 API 交互
+- **包含内容**：
+  - `getCurrentUser()` 函数：获取当前用户信息
+    - 端点：`GET /v1/users/profile`
+    - 返回：`Promise<User>` - 当前登录用户的完整信息（包含用户资料）
+    - 认证：需要 JWT token（通过请求拦截器自动添加）
+- **使用方式**：
+  ```typescript
+  import { getCurrentUser } from '@/services/users';
+  
+  try {
+    const user = await getCurrentUser();
+    console.log('User:', user);
+  } catch (error: any) {
+    console.error(error.message); // 友好的错误消息
+  }
+  ```
+- **错误处理**：
+  - 自动使用 API 服务的统一错误处理机制
+  - 错误消息已转换为友好的中文提示
 
 #### `services/auth.ts`
 - **作用**：认证相关 API 服务
