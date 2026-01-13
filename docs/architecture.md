@@ -780,13 +780,30 @@
 - **功能**：
   - 使用 `@Injectable()` 装饰器，可被依赖注入
   - 注入 `Dish` 实体的 Repository，用于数据库操作
-  - 实现菜品相关的业务逻辑方法（当前为空实现，后续步骤将添加）
+  - 实现菜品相关的业务逻辑方法
 - **依赖注入**：
   ```typescript
   @InjectRepository(Dish)
   private readonly dishRepository: Repository<Dish>
   ```
-- **后续扩展**：将添加菜品查询、创建、更新、删除等业务逻辑方法
+- **业务方法**：
+  - `findAll(queryDto: QueryDishesDto)`: 获取菜品列表
+    - 支持分页（page, limit）
+    - 支持按 category 和 cuisineType 筛选
+    - 使用 TypeORM QueryBuilder 构建动态查询
+    - 返回分页结果（items, total, page, limit, totalPages）
+    - 按创建时间倒序排列
+- **分页结果接口**：
+  ```typescript
+  interface PaginatedResult<T> {
+    items: T[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }
+  ```
+- **后续扩展**：将添加菜品创建、更新、删除等业务逻辑方法
 
 #### `modules/dishes/dishes.controller.ts`
 - **作用**：菜品控制器，处理菜品相关的 HTTP 请求
@@ -796,11 +813,45 @@
   - 处理菜品相关的 HTTP 请求和响应
   - 调用服务层处理业务逻辑
   - 返回统一的响应格式
+- **API 端点**：
+  - `GET /v1/dishes` - 获取菜品列表
+    - 使用 `@Get()` 装饰器定义路由
+    - 接收查询参数（QueryDishesDto）：page, limit, category, cuisineType
+    - 调用 `dishesService.findAll()` 获取分页的菜品列表
+    - 返回统一响应格式（`SuccessResponse<PaginatedResult<Dish>>`）
+    - 支持分页和筛选功能
 - **Swagger 文档**：
   - 使用 `@ApiTags('dishes')` 装饰器将控制器分组到 dishes 标签
-  - 在 Swagger UI 中显示为独立的接口组
-- **当前状态**：空实现，已准备好添加路由处理（后续步骤将添加）
+  - 使用 `@ApiOperation` 添加接口描述和说明
+  - 使用 `@ApiQuery` 为每个查询参数添加说明
+  - 使用 `@ApiResponse` 定义成功响应格式
+  - 包含完整的示例值和字段说明
+  - 支持在 Swagger UI 中直接测试
 - **依赖注入**：注入 `DishesService` 用于业务逻辑处理
+
+#### `modules/dishes/dto/`
+- **作用**：存放菜品模块的 DTO（数据传输对象）文件
+- **位置**：`src/modules/dishes/dto/`
+- **说明**：DTO 用于定义 API 请求和响应的数据结构，并包含验证规则
+
+#### `modules/dishes/dto/query-dishes.dto.ts`
+- **作用**：查询菜品列表 DTO
+- **包含字段**：
+  - `page` - 页码（从 1 开始），可选，默认值 1，最小值为 1
+  - `limit` - 每页数量，可选，默认值 10，最小值为 1，最大值为 100
+  - `category` - 菜品分类，可选，字符串类型
+  - `cuisineType` - 菜系类型，可选，字符串类型
+- **验证规则**：
+  - 使用 `class-validator` 装饰器进行验证
+  - 使用 `@Type(() => Number)` 确保数字类型转换
+  - `page` 和 `limit` 使用 `@IsInt()` 和 `@Min()` 验证
+  - `category` 和 `cuisineType` 使用 `@IsString()` 验证
+  - 所有字段都是可选的（`@IsOptional()`）
+- **Swagger 文档**：
+  - 使用 `@ApiProperty` 装饰器为每个字段添加 API 文档说明
+  - 包含字段描述、示例值、范围限制、可选标记等信息
+  - 自动生成 Swagger API 文档
+- **用途**：用于获取菜品列表接口的查询参数验证
 
 ---
 

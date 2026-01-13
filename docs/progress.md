@@ -2157,3 +2157,119 @@ getProfile(@CurrentUser() user: JwtPayload) {
 
 ---
 
+### ✅ 3.3 实现获取菜品列表 API（已完成）
+
+**完成时间**：2026年1月13日
+
+**完成内容**：
+1. 创建了查询 DTO（`QueryDishesDto`），支持分页和筛选参数
+2. 在 `dishes.service.ts` 中实现了 `findAll` 方法
+3. 在 `dishes.controller.ts` 中创建了 `GET /v1/dishes` 端点
+4. 添加了完整的 Swagger 文档装饰器
+
+**创建的文件和目录**：
+- `server/src/modules/dishes/dto/query-dishes.dto.ts` - 查询菜品列表 DTO
+
+**修改的文件**：
+- `server/src/modules/dishes/dishes.service.ts` - 添加了 `findAll` 方法
+- `server/src/modules/dishes/dishes.controller.ts` - 添加了 `GET /v1/dishes` 端点
+
+**QueryDishesDto 字段详情**：
+- `page` - 页码（从 1 开始），可选，默认值 1，最小值为 1
+- `limit` - 每页数量，可选，默认值 10，最小值为 1，最大值为 100
+- `category` - 菜品分类，可选，字符串类型
+- `cuisineType` - 菜系类型，可选，字符串类型
+
+**findAll 方法实现详情**：
+- **参数**：`queryDto: QueryDishesDto` - 查询参数（分页和筛选）
+- **返回值**：`Promise<PaginatedResult<Dish>>` - 分页的菜品列表
+- **功能流程**：
+  1. 从查询参数中提取分页和筛选条件
+  2. 使用 TypeORM QueryBuilder 构建查询
+  3. 根据 `category` 和 `cuisineType` 添加筛选条件
+  4. 计算总数（`total`）
+  5. 执行分页查询（`skip` 和 `take`）
+  6. 按创建时间倒序排列（`orderBy`）
+  7. 计算总页数（`totalPages`）
+  8. 返回分页结果
+- **分页结果结构**：
+  ```typescript
+  {
+    items: Dish[];      // 菜品列表
+    total: number;       // 总记录数
+    page: number;        // 当前页码
+    limit: number;       // 每页数量
+    totalPages: number;   // 总页数
+  }
+  ```
+
+**API 端点详情**：
+- **路径**：`GET /v1/dishes`
+- **查询参数**：
+  - `page` - 页码（可选，默认 1）
+  - `limit` - 每页数量（可选，默认 10）
+  - `category` - 菜品分类（可选）
+  - `cuisineType` - 菜系类型（可选）
+- **成功响应（200）**：
+  ```json
+  {
+    "success": true,
+    "data": {
+      "items": [
+        {
+          "id": 1,
+          "name": "宫保鸡丁",
+          "category": "川菜",
+          "cuisineType": "中式",
+          "nutrition": {
+            "calories": 250,
+            "protein": 20,
+            "fat": 10,
+            "carbs": 15
+          },
+          "tags": ["辣", "下饭"],
+          "description": "经典川菜，麻辣鲜香",
+          "userId": null,
+          "createdAt": "2025-12-31T12:00:00.000Z"
+        }
+      ],
+      "total": 100,
+      "page": 1,
+      "limit": 10,
+      "totalPages": 10
+    },
+    "message": "获取成功"
+  }
+  ```
+
+**技术细节**：
+- 使用 TypeORM QueryBuilder 进行动态查询构建
+- 支持可选筛选条件（category、cuisineType）
+- 使用 `skip()` 和 `take()` 实现分页
+- 使用 `orderBy()` 按创建时间倒序排列
+- 使用 `class-validator` 和 `class-transformer` 进行参数验证和类型转换
+- 使用 `@Type(() => Number)` 装饰器确保数字类型转换
+- 返回统一响应格式（`SuccessResponse`）
+
+**Swagger 文档**：
+- 使用 `@ApiOperation` 添加接口描述和说明
+- 使用 `@ApiQuery` 为每个查询参数添加说明
+- 使用 `@ApiResponse` 定义成功响应格式
+- 包含完整的示例值和字段说明
+- 支持在 Swagger UI 中直接测试
+
+**验证结果**：
+- ✅ 创建了查询 DTO，支持分页和筛选参数
+- ✅ 实现了 `findAll` 方法，支持分页和筛选
+- ✅ 创建了 `GET /v1/dishes` 端点
+- ✅ 添加了完整的 Swagger 文档
+- ⏳ 访问端点，应返回菜品列表（需要用户验证）
+- ⏳ 使用分页参数，应返回正确数量的结果（需要用户验证）
+- ⏳ 检查响应格式，应包含分页信息（需要用户验证）
+- ⏳ 使用筛选参数，应返回匹配的菜品（需要用户验证）
+- ⏳ 响应时间应小于 1 秒（需要用户验证）
+
+**下一步**：3.4 实现获取单个菜品详情 API
+
+---
+
