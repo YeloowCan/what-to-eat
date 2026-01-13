@@ -2902,3 +2902,115 @@ async function getDish(id: number): Promise<ApiSuccessResponse<Dish>> {
 
 ---
 
+### ✅ 3.10 实现获取菜品列表的 React Query Hook（已完成）
+
+**完成时间**：2026年1月13日
+
+**完成内容**：
+1. 创建了 `services/dishes.ts` 文件，包含菜品相关的 API 调用函数
+2. 定义了 `PaginatedResult<T>` 接口，与后端保持一致
+3. 定义了 `QueryDishesParams` 接口，支持分页和筛选参数
+4. 实现了 `getDishes()` 函数，获取菜品列表（支持分页和筛选）
+5. 实现了 `getDish()` 函数，获取单个菜品详情
+6. 创建了 `hooks/useDishes.ts` 文件，包含 `useDishes()` React Query Hook
+7. Hook 支持分页参数（page, limit）和筛选参数（category, cuisineType）
+
+**创建的文件和目录**：
+- `mobile/services/dishes.ts` - 菜品服务 API 调用函数
+- `mobile/hooks/useDishes.ts` - 获取菜品列表的 React Query Hook
+
+**services/dishes.ts 详情**：
+- **PaginatedResult<T> 接口**：
+  - `items: T[]` - 数据列表
+  - `total: number` - 总记录数
+  - `page: number` - 当前页码
+  - `limit: number` - 每页数量
+  - `totalPages: number` - 总页数
+  - 与后端 `PaginatedResult` 接口完全一致
+- **QueryDishesParams 接口**：
+  - `page?: number` - 页码（从 1 开始），默认 1
+  - `limit?: number` - 每页数量，默认 10
+  - `category?: string` - 菜品分类（可选）
+  - `cuisineType?: string` - 菜系类型（可选）
+  - 与后端 `QueryDishesDto` 保持一致
+- **getDishes(params?: QueryDishesParams) 函数**：
+  - 端点：`GET /v1/dishes`
+  - 支持查询参数：page, limit, category, cuisineType
+  - 返回：`Promise<PaginatedResult<Dish>>` - 分页的菜品列表
+  - 使用 axios 的 `params` 选项传递查询参数
+- **getDish(id: number) 函数**：
+  - 端点：`GET /v1/dishes/:id`
+  - 返回：`Promise<Dish>` - 菜品详情
+  - 用于获取单个菜品的详细信息
+
+**hooks/useDishes.ts 详情**：
+- **useDishes(params?: QueryDishesParams) Hook**：
+  - 使用 React Query 的 `useQuery` Hook
+  - 自动处理加载状态、错误状态和缓存
+  - 支持分页参数（page, limit）
+  - 支持筛选参数（category, cuisineType）
+  - 查询键：`['dishes', params]` - 根据参数自动生成缓存键
+  - 缓存策略：`staleTime: 5 * 60 * 1000` - 5 分钟内数据视为新鲜
+  - 重试策略：`retry: 1` - 失败时重试 1 次
+
+**功能特性**：
+1. **类型安全**：使用 TypeScript 接口确保类型正确
+2. **分页支持**：支持 page 和 limit 参数，实现分页功能
+3. **筛选支持**：支持 category 和 cuisineType 筛选
+4. **自动缓存**：React Query 自动处理数据缓存，减少不必要的 API 调用
+5. **错误处理**：自动使用 API 服务的统一错误处理机制
+6. **与后端一致**：类型定义与后端 DTO 和响应格式保持一致
+
+**使用方式**：
+```typescript
+import { useDishes } from '@/hooks/useDishes';
+
+// 基本使用（默认分页）
+const { data, isLoading, error } = useDishes();
+
+// 带分页参数
+const { data, isLoading, error } = useDishes({ page: 1, limit: 10 });
+
+// 带筛选条件
+const { data, isLoading, error } = useDishes({ 
+  page: 1, 
+  limit: 10,
+  category: '川菜',
+  cuisineType: '中式'
+});
+
+// 使用返回的数据
+if (isLoading) {
+  return <SkeletonLoader />;
+}
+
+if (error) {
+  return <ErrorMessage error={error} />;
+}
+
+// data 包含：items, total, page, limit, totalPages
+const { items, total, page, limit, totalPages } = data;
+```
+
+**技术细节**：
+- 使用 `useQuery` Hook 进行数据获取
+- 查询键包含参数，确保不同参数的查询分别缓存
+- 自动处理缓存、重新获取、错误重试等
+- 与 React Query Provider 集成（在根布局中配置）
+- 类型定义与后端完全一致，确保类型安全
+
+**验证结果**：
+- ✅ 创建了 `services/dishes.ts` 文件，包含获取菜品列表和详情的 API 调用函数
+- ✅ 创建了 `hooks/useDishes.ts` 文件，包含 `useDishes()` React Query Hook
+- ✅ 支持分页参数（page, limit）
+- ✅ 支持筛选参数（category, cuisineType）
+- ✅ 类型定义与后端保持一致
+- ✅ TypeScript 编译通过，无类型错误
+- ⏳ 在组件中使用 Hook，应能获取数据（需要用户验证）
+- ⏳ 检查网络请求，应发送到正确的端点 `/v1/dishes`（需要用户验证）
+- ⏳ 数据应正确缓存（5 分钟内不重新获取）（需要用户验证）
+
+**下一步**：3.11 实现推荐页面 UI（含骨架屏和加载动画）
+
+---
+

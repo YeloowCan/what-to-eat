@@ -1976,6 +1976,72 @@
   - **错误处理**：自动处理错误状态，方便显示错误信息
   - **类型安全**：使用 TypeScript 确保类型正确
 
+#### `hooks/useDishes.ts`
+- **作用**：获取菜品列表的 React Query Hook
+- **功能**：
+  - 使用 React Query 获取菜品列表数据
+  - 自动处理加载状态、错误状态和缓存
+  - 支持分页参数（page, limit）
+  - 支持筛选参数（category, cuisineType）
+- **使用方式**：
+  ```typescript
+  import { useDishes } from '@/hooks/useDishes';
+  
+  // 基本使用（默认分页）
+  const { data, isLoading, error } = useDishes();
+  
+  // 带分页参数
+  const { data, isLoading, error } = useDishes({ page: 1, limit: 10 });
+  
+  // 带筛选条件
+  const { data, isLoading, error } = useDishes({ 
+    page: 1, 
+    limit: 10,
+    category: '川菜',
+    cuisineType: '中式'
+  });
+  
+  // 使用返回的数据
+  if (isLoading) {
+    return <SkeletonLoader />;
+  }
+  
+  if (error) {
+    return <ErrorMessage error={error} />;
+  }
+  
+  // data 包含：items, total, page, limit, totalPages
+  const { items, total, page, limit, totalPages } = data;
+  ```
+- **配置选项**：
+  - `queryKey: ['dishes', params]` - 查询键，根据参数自动生成缓存键
+  - `queryFn: () => getDishes(params)` - 查询函数，调用 API 获取菜品列表
+  - `staleTime: 5 * 60 * 1000` - 5 分钟内数据视为新鲜，不重新获取
+  - `retry: 1` - 失败时重试 1 次
+- **返回数据**：
+  - `data: PaginatedResult<Dish> | undefined` - 分页的菜品列表（加载成功时）
+    - `items: Dish[]` - 菜品列表
+    - `total: number` - 总记录数
+    - `page: number` - 当前页码
+    - `limit: number` - 每页数量
+    - `totalPages: number` - 总页数
+  - `isLoading: boolean` - 是否正在加载
+  - `error: Error | null` - 错误信息（加载失败时）
+  - 其他 React Query 标准返回值（如 `refetch`, `isFetching` 等）
+- **技术细节**：
+  - 使用 `useQuery` Hook 进行数据获取
+  - 查询键包含参数，确保不同参数的查询分别缓存
+  - 自动处理缓存、重新获取、错误重试等
+  - 与 React Query Provider 集成（在根布局中配置）
+  - 类型定义与后端完全一致，确保类型安全
+- **优势**：
+  - **自动缓存**：数据自动缓存，不同参数的查询分别缓存
+  - **加载状态**：自动提供加载状态，方便显示骨架屏
+  - **错误处理**：自动处理错误状态，方便显示错误信息
+  - **类型安全**：使用 TypeScript 确保类型正确
+  - **分页支持**：支持分页参数，方便实现分页功能
+  - **筛选支持**：支持筛选参数，方便实现筛选功能
+
 ---
 
 ### 服务目录（services/）
@@ -2064,6 +2130,67 @@
 - **错误处理**：
   - 自动使用 API 服务的统一错误处理机制
   - 错误消息已转换为友好的中文提示
+
+#### `services/dishes.ts`
+- **作用**：菜品相关 API 服务
+- **功能**：
+  - 提供获取菜品列表和详情的 API 调用
+  - 与后端菜品 API 交互
+  - 支持分页和筛选功能
+- **包含内容**：
+  - `PaginatedResult<T>` 接口：分页结果接口
+    - `items: T[]` - 数据列表
+    - `total: number` - 总记录数
+    - `page: number` - 当前页码
+    - `limit: number` - 每页数量
+    - `totalPages: number` - 总页数
+    - 与后端 `PaginatedResult` 接口完全一致
+  - `QueryDishesParams` 接口：查询参数接口
+    - `page?: number` - 页码（从 1 开始），默认 1
+    - `limit?: number` - 每页数量，默认 10
+    - `category?: string` - 菜品分类（可选）
+    - `cuisineType?: string` - 菜系类型（可选）
+    - 与后端 `QueryDishesDto` 保持一致
+  - `getDishes(params?: QueryDishesParams)` 函数：获取菜品列表
+    - 端点：`GET /v1/dishes`
+    - 支持查询参数：page, limit, category, cuisineType
+    - 返回：`Promise<PaginatedResult<Dish>>` - 分页的菜品列表
+    - 使用 axios 的 `params` 选项传递查询参数
+  - `getDish(id: number)` 函数：获取单个菜品详情
+    - 端点：`GET /v1/dishes/:id`
+    - 返回：`Promise<Dish>` - 菜品详情
+- **使用方式**：
+  ```typescript
+  import { getDishes, getDish } from '@/services/dishes';
+  
+  // 获取菜品列表（带分页和筛选）
+  try {
+    const result = await getDishes({ 
+      page: 1, 
+      limit: 10,
+      category: '川菜',
+      cuisineType: '中式'
+    });
+    console.log('Items:', result.items);
+    console.log('Total:', result.total);
+  } catch (error: any) {
+    console.error(error.message); // 友好的错误消息
+  }
+  
+  // 获取单个菜品详情
+  try {
+    const dish = await getDish(1);
+    console.log('Dish:', dish);
+  } catch (error: any) {
+    console.error(error.message); // 友好的错误消息
+  }
+  ```
+- **错误处理**：
+  - 自动使用 API 服务的统一错误处理机制
+  - 错误消息已转换为友好的中文提示
+- **与后端保持一致**：
+  - 类型定义与后端 DTO 和响应格式完全一致
+  - 确保前后端类型同步，减少运行时错误
 
 #### `services/auth.ts`
 - **作用**：认证相关 API 服务
