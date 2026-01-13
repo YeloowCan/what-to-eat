@@ -56,3 +56,17 @@ export async function getDish(id: number): Promise<Dish> {
   // 响应格式：{ success: true, data: { id, name, ... }, message: '...' }
   return response.data;
 }
+
+/**
+ * 获取随机推荐菜品
+ * @returns Promise<Dish> 随机推荐的菜品
+ * @throws 如果获取失败，抛出包含友好错误消息的 Error
+ */
+export async function getRandomDish(): Promise<Dish> {
+  const response = await api.get<ApiSuccessResponse<Dish>>(
+    '/dishes/recommend/random',
+  );
+
+  // 响应格式：{ success: true, data: { id, name, ... }, message: '...' }
+  return response.data;
+}

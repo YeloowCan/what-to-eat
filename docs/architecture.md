@@ -1872,6 +1872,60 @@
   - **成功状态**：显示用户信息和资料
   - **空状态**：无资料时显示提示信息
 
+#### `app/recommend.tsx`
+- **作用**：推荐页面组件，显示随机推荐的菜品
+- **路由**：对应路径 `/recommend`
+- **功能**：
+  - 显示随机推荐的菜品信息
+  - 支持重新获取推荐（"换一个"按钮）
+  - 应用路由守卫，未认证时自动重定向
+  - 实现骨架屏，数据加载时显示占位符
+  - 处理错误状态，显示友好的错误信息
+- **UI 设计**：
+  - **主色调**：`#8fd460`（清新绿色，与应用主题一致）
+  - **背景色**：`#f8fbf6`（浅绿色背景）
+  - **卡片设计**：使用 Material Design 卡片组件
+  - **布局**：居中显示，响应式设计
+- **菜品信息展示**：
+  - **菜品名称**：大号字体，加粗显示，居中
+  - **分类和菜系**：使用 Chip 组件显示，带背景色
+  - **描述**：中等字体，次要颜色，多行显示
+  - **标签**：使用 Chip 组件显示，浅色背景
+  - **营养成分**：网格布局，显示卡路里、蛋白质、脂肪、碳水化合物
+- **骨架屏实现**：
+  - 使用自定义组件 `SkeletonLoader`
+  - 模拟真实内容布局（标题、文本行、标签、营养成分）
+  - 使用灰色占位符，提供视觉反馈
+  - 在数据加载时显示，避免空白页面
+- **加载动画**：
+  - 按钮点击时显示加载状态（`isFetching`）
+  - 按钮文本显示"获取中..."
+  - 按钮禁用，防止重复点击
+  - 使用 React Native Paper 的 `ActivityIndicator`
+- **错误处理**：
+  - **网络错误**：显示友好的错误消息和重试按钮
+  - **数据不存在**：显示提示信息和重试按钮
+  - **错误消息**：使用 API 返回的友好错误消息（不是技术错误）
+- **"换一个"按钮**：
+  - 使用 `refetch()` 方法重新获取推荐
+  - 显示加载状态（`isFetching`）
+  - 按钮图标：refresh
+  - 点击时自动获取新的随机推荐
+- **技术细节**：
+  - 使用 `useQuery` Hook 进行数据获取
+  - 查询键：`['dishes', 'random']`
+  - 缓存策略：`staleTime: 0` - 每次都需要获取新的推荐
+  - 重试策略：`retry: 1` - 失败时重试 1 次
+  - 使用 `refetch()` 方法重新获取数据
+  - 使用 `isFetching` 判断是否正在获取数据
+  - 使用 `useAuthGuard()` Hook 保护页面
+  - 响应式布局，适配不同屏幕尺寸
+- **状态处理**：
+  - **加载状态**：显示骨架屏
+  - **错误状态**：显示错误信息和重试按钮
+  - **成功状态**：显示菜品信息
+  - **获取中状态**：按钮显示加载动画
+
 ---
 
 ### Hooks 目录（hooks/）
@@ -2159,9 +2213,14 @@
   - `getDish(id: number)` 函数：获取单个菜品详情
     - 端点：`GET /v1/dishes/:id`
     - 返回：`Promise<Dish>` - 菜品详情
+  - `getRandomDish()` 函数：获取随机推荐菜品
+    - 端点：`GET /v1/dishes/recommend/random`
+    - 返回：`Promise<Dish>` - 随机推荐的菜品
+    - 用于"今天吃什么"功能，帮助用户快速决策
+    - 每次调用都可能返回不同的菜品（或可能相同，因为是随机）
 - **使用方式**：
   ```typescript
-  import { getDishes, getDish } from '@/services/dishes';
+  import { getDishes, getDish, getRandomDish } from '@/services/dishes';
   
   // 获取菜品列表（带分页和筛选）
   try {
@@ -2181,6 +2240,14 @@
   try {
     const dish = await getDish(1);
     console.log('Dish:', dish);
+  } catch (error: any) {
+    console.error(error.message); // 友好的错误消息
+  }
+  
+  // 获取随机推荐菜品
+  try {
+    const dish = await getRandomDish();
+    console.log('Random Dish:', dish);
   } catch (error: any) {
     console.error(error.message); // 友好的错误消息
   }
