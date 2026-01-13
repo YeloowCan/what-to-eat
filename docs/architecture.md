@@ -2176,6 +2176,62 @@
   }
   ```
 
+#### `types/dish.ts`
+- **作用**：菜品相关类型定义
+- **包含内容**：
+  - `Nutrition` 接口：营养成分信息
+    - `calories: number` - 卡路里（kcal）
+    - `protein: number` - 蛋白质（g）
+    - `fat: number` - 脂肪（g）
+    - `carbs: number` - 碳水化合物（g）
+  - `Dish` 接口：菜品信息
+    - `id: number` - 菜品 ID
+    - `name: string` - 菜品名称
+    - `category: string | null` - 菜品分类（可选）
+    - `cuisineType: string | null` - 菜系类型（可选）
+    - `nutrition: Nutrition` - 营养成分对象（必填）
+    - `tags: string[] | null` - 标签数组（可选）
+    - `description: string | null` - 菜品描述（可选）
+    - `userId: number | null` - 创建者用户 ID（可选）
+    - `createdAt: string` - 创建时间（ISO 8601 格式字符串）
+- **与后端保持一致**：
+  - `Nutrition` 接口与后端 `Nutrition` 接口完全一致
+  - `Dish` 接口与后端 `Dish` 实体字段完全匹配
+  - 字段名称和类型与后端 API 响应格式保持一致
+  - 确保前后端类型同步，减少运行时错误
+- **技术细节**：
+  - 所有可选字段使用 `| null` 类型，与后端实体保持一致
+  - `createdAt` 使用字符串类型（ISO 8601 格式），因为 JSON 序列化后 Date 对象会变成字符串
+  - 使用 TypeScript 接口确保编译时类型检查
+- **使用方式**：
+  ```typescript
+  import type { Dish, Nutrition } from '@/types/dish';
+  import type { ApiSuccessResponse } from '@/types/api';
+  
+  // 在组件中使用
+  const dish: Dish = {
+    id: 1,
+    name: '宫保鸡丁',
+    category: '川菜',
+    cuisineType: '中式',
+    nutrition: {
+      calories: 250,
+      protein: 20,
+      fat: 10,
+      carbs: 15,
+    },
+    tags: ['辣', '下饭'],
+    description: '经典川菜，麻辣鲜香',
+    userId: null,
+    createdAt: '2025-12-31T12:00:00.000Z',
+  };
+  
+  // 在 API 服务中使用
+  async function getDish(id: number): Promise<ApiSuccessResponse<Dish>> {
+    return await api.get(`/dishes/${id}`);
+  }
+  ```
+
 ---
 
 ### 状态管理目录（store/）

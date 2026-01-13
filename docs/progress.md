@@ -2818,3 +2818,87 @@ pnpm run seed:dishes
 
 ---
 
+### ✅ 3.9 创建前端菜品类型定义（已完成）
+
+**完成时间**：2026年1月13日
+
+**完成内容**：
+1. 创建了 `types/dish.ts` 文件
+2. 定义了 `Nutrition` 接口，匹配后端结构
+3. 定义了 `Dish` 接口，匹配后端实体结构
+4. 所有字段类型与后端保持一致
+
+**创建的文件和目录**：
+- `mobile/types/dish.ts` - 菜品类型定义文件
+
+**类型定义详情**：
+- **Nutrition 接口**：
+  - `calories: number` - 卡路里（kcal）
+  - `protein: number` - 蛋白质（g）
+  - `fat: number` - 脂肪（g）
+  - `carbs: number` - 碳水化合物（g）
+- **Dish 接口**：
+  - `id: number` - 菜品 ID
+  - `name: string` - 菜品名称
+  - `category: string | null` - 菜品分类（可选）
+  - `cuisineType: string | null` - 菜系类型（可选）
+  - `nutrition: Nutrition` - 营养成分对象（必填）
+  - `tags: string[] | null` - 标签数组（可选）
+  - `description: string | null` - 菜品描述（可选）
+  - `userId: number | null` - 创建者用户 ID（可选）
+  - `createdAt: string` - 创建时间（ISO 8601 格式字符串）
+
+**技术细节**：
+- 所有可选字段使用 `| null` 类型，与后端实体保持一致
+- `createdAt` 使用字符串类型（ISO 8601 格式），因为 JSON 序列化后 Date 对象会变成字符串
+- 类型定义与后端 `Dish` 实体完全匹配，确保类型安全
+- 使用 TypeScript 接口确保编译时类型检查
+
+**与后端保持一致**：
+- `Nutrition` 接口与后端 `Nutrition` 接口完全一致
+- `Dish` 接口与后端 `Dish` 实体字段完全匹配
+- 字段名称和类型与后端 API 响应格式保持一致
+- 确保前后端类型同步，减少运行时错误
+
+**使用方式**：
+```typescript
+import type { Dish, Nutrition } from '@/types/dish';
+
+// 在组件中使用
+const dish: Dish = {
+  id: 1,
+  name: '宫保鸡丁',
+  category: '川菜',
+  cuisineType: '中式',
+  nutrition: {
+    calories: 250,
+    protein: 20,
+    fat: 10,
+    carbs: 15,
+  },
+  tags: ['辣', '下饭'],
+  description: '经典川菜，麻辣鲜香',
+  userId: null,
+  createdAt: '2025-12-31T12:00:00.000Z',
+};
+
+// 在 API 服务中使用
+import type { ApiSuccessResponse } from '@/types/api';
+import type { Dish } from '@/types/dish';
+
+async function getDish(id: number): Promise<ApiSuccessResponse<Dish>> {
+  return await api.get(`/dishes/${id}`);
+}
+```
+
+**验证结果**：
+- ✅ 创建了 `types/dish.ts` 文件，包含 `Nutrition` 和 `Dish` 接口定义
+- ✅ 类型定义与后端实体结构完全匹配
+- ✅ 所有字段类型正确（可选字段使用 `| null`）
+- ✅ TypeScript 编译通过，无类型错误
+- ✅ 可以在组件和服务中正常使用类型定义
+
+**下一步**：3.10 实现获取菜品列表的 React Query Hook
+
+---
+
