@@ -793,6 +793,10 @@
     - 使用 TypeORM QueryBuilder 构建动态查询
     - 返回分页结果（items, total, page, limit, totalPages）
     - 按创建时间倒序排列
+  - `findOne(id: number)`: 根据 ID 查找菜品
+    - 使用 TypeORM 的 `findOne()` 方法查询数据库
+    - 如果菜品不存在，返回 `null`
+    - 如果菜品存在，返回完整的菜品信息
 - **分页结果接口**：
   ```typescript
   interface PaginatedResult<T> {
@@ -820,6 +824,12 @@
     - 调用 `dishesService.findAll()` 获取分页的菜品列表
     - 返回统一响应格式（`SuccessResponse<PaginatedResult<Dish>>`）
     - 支持分页和筛选功能
+  - `GET /v1/dishes/:id` - 获取单个菜品详情
+    - 使用 `@Get(':id')` 装饰器定义路由
+    - 使用 `@Param('id', ParseIntPipe)` 解析路径参数并转换为数字类型
+    - 调用 `dishesService.findOne()` 获取菜品详情
+    - 如果菜品不存在，抛出 `NotFoundException`，返回统一错误格式
+    - 返回统一响应格式（`SuccessResponse<Dish>`）
 - **Swagger 文档**：
   - 使用 `@ApiTags('dishes')` 装饰器将控制器分组到 dishes 标签
   - 使用 `@ApiOperation` 添加接口描述和说明

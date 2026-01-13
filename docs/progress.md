@@ -2273,3 +2273,99 @@ getProfile(@CurrentUser() user: JwtPayload) {
 
 ---
 
+### ✅ 3.4 实现获取单个菜品详情 API（已完成）
+
+**完成时间**：2026年1月13日
+
+**完成内容**：
+1. 在 `dishes.service.ts` 中实现了 `findOne` 方法
+2. 在 `dishes.controller.ts` 中创建了 `GET /v1/dishes/:id` 端点
+3. 实现了菜品不存在的错误处理，返回统一错误格式
+4. 添加了完整的 Swagger 文档装饰器
+
+**修改的文件**：
+- `server/src/modules/dishes/dishes.service.ts` - 添加了 `findOne` 方法
+- `server/src/modules/dishes/dishes.controller.ts` - 添加了 `GET /v1/dishes/:id` 端点
+
+**findOne 方法实现详情**：
+- **参数**：`id: number` - 菜品 ID
+- **返回值**：`Promise<Dish | null>` - 菜品信息，如果菜品不存在返回 null
+- **功能流程**：
+  1. 使用 TypeORM 的 `findOne()` 方法根据 ID 查询菜品
+  2. 如果菜品不存在，返回 `null`
+  3. 如果菜品存在，返回完整的菜品信息
+
+**API 端点详情**：
+- **路径**：`GET /v1/dishes/:id`
+- **路径参数**：
+  - `id` - 菜品 ID（整数类型，使用 `ParseIntPipe` 自动转换）
+- **成功响应（200）**：
+  ```json
+  {
+    "success": true,
+    "data": {
+      "id": 1,
+      "name": "宫保鸡丁",
+      "category": "川菜",
+      "cuisineType": "中式",
+      "nutrition": {
+        "calories": 250,
+        "protein": 20,
+        "fat": 10,
+        "carbs": 15
+      },
+      "tags": ["辣", "下饭"],
+      "description": "经典川菜，麻辣鲜香",
+      "userId": null,
+      "createdAt": "2025-12-31T12:00:00.000Z"
+    },
+    "message": "获取成功"
+  }
+  ```
+- **错误响应（404）**：菜品不存在
+  ```json
+  {
+    "success": false,
+    "error": {
+      "code": "DISH_001",
+      "message": "菜品不存在"
+    },
+    "timestamp": "2025-12-31T12:00:00.000Z",
+    "path": "/v1/dishes/999"
+  }
+  ```
+
+**错误处理**：
+- 使用 `@Param('id', ParseIntPipe)` 解析路径参数并转换为数字类型
+- 如果菜品不存在，抛出 `NotFoundException('菜品不存在')`
+- 全局异常过滤器会自动处理异常，返回统一错误格式
+- 错误码自动映射为 `DISH_001`（根据错误消息内容）
+
+**技术细节**：
+- 使用 TypeORM 的 `findOne()` 方法查询数据库
+- 使用 `ParseIntPipe` 确保路径参数为整数类型
+- 使用 `NotFoundException` 处理资源不存在的情况
+- 返回统一响应格式（`SuccessResponse<Dish>`）
+- 错误响应由全局异常过滤器统一处理
+
+**Swagger 文档**：
+- 使用 `@ApiOperation` 添加接口描述和说明
+- 使用 `@ApiParam` 添加路径参数说明
+- 使用 `@ApiResponse` 定义成功响应（200）和错误响应（404）
+- 包含完整的示例值和字段说明
+- 支持在 Swagger UI 中直接测试
+
+**验证结果**：
+- ✅ 实现了 `findOne` 方法，根据 ID 查找菜品
+- ✅ 创建了 `GET /v1/dishes/:id` 端点
+- ✅ 实现了菜品不存在的错误处理
+- ✅ 添加了完整的 Swagger 文档
+- ⏳ 使用有效 ID 访问，应返回菜品详情（需要用户验证）
+- ⏳ 使用无效 ID 访问，应返回 404 错误和统一错误格式（需要用户验证）
+- ⏳ 响应应包含完整的菜品信息（需要用户验证）
+- ⏳ 响应时间应小于 1 秒（需要用户验证）
+
+**下一步**：3.5 实现创建菜品 API（用户手动录入）
+
+---
+

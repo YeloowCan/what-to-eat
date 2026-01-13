@@ -68,5 +68,22 @@ export class DishesService {
       totalPages,
     };
   }
+
+  /**
+   * 根据 ID 查找菜品
+   * @param id 菜品 ID
+   * @returns 菜品信息，如果菜品不存在返回 null
+   */
+  async findOne(id: number): Promise<Dish | null> {
+    const dish = await this.dishRepository.findOne({
+      where: { id },
+    });
+
+    if (!dish) {
+      return null;
+    }
+
+    return dish;
+  }
 }
 

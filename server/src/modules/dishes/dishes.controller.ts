@@ -1,9 +1,19 @@
-import { Controller, Get, Query, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  Param,
+  HttpCode,
+  HttpStatus,
+  NotFoundException,
+  ParseIntPipe,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiQuery,
+  ApiParam,
 } from '@nestjs/swagger';
 import { DishesService } from './dishes.service';
 import { QueryDishesDto } from './dto/query-dishes.dto';
@@ -120,6 +130,102 @@ export class DishesController {
     return {
       success: true,
       data: result,
+      message: '获取成功',
+    };
+  }
+
+  /**
+   * 获取单个菜品详情
+   * @param id 菜品 ID
+   * @returns 菜品详情
+   */
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '获取单个菜品详情',
+    description: '根据菜品 ID 获取菜品详细信息',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: '菜品 ID',
+    example: 1,
+  })
+  @ApiResponse({
+    status: 200,
+    description: '获取成功',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        data: {
+          type: 'object',
+          properties: {
+            id: { type: 'number', example: 1 },
+            name: { type: 'string', example: '宫保鸡丁' },
+            category: { type: 'string', example: '川菜' },
+            cuisineType: { type: 'string', example: '中式' },
+            nutrition: {
+              type: 'object',
+              properties: {
+                calories: { type: 'number', example: 250 },
+                protein: { type: 'number', example: 20 },
+                fat: { type: 'number', example: 10 },
+                carbs: { type: 'number', example: 15 },
+              },
+            },
+            tags: {
+              type: 'array',
+              items: { type: 'string' },
+              example: ['辣', '下饭'],
+            },
+            description: {
+              type: 'string',
+              example: '经典川菜，麻辣鲜香',
+            },
+            userId: { type: 'number', nullable: true, example: null },
+            createdAt: {
+              type: 'string',
+              format: 'date-time',
+              example: '2025-12-31T12:00:00.000Z',
+            },
+          },
+        },
+        message: { type: 'string', example: '获取成功' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: '菜品不存在',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: false },
+        error: {
+          type: 'object',
+          properties: {
+            code: { type: 'string', example: 'DISH_001' },
+            message: { type: 'string', example: '菜品不存在' },
+          },
+        },
+        timestamp: { type: 'string', format: 'date-time' },
+        path: { type: 'string', example: '/v1/dishes/999' },
+      },
+    },
+  })
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<SuccessResponse<Dish>> {
+    const dish = await this.dishesService.findOne(id);
+
+    if (!dish) {
+      throw new NotFoundException('菜品不存在');
+    }
+
+    return {
+      success: true,
+      data: dish,
       message: '获取成功',
     };
   }
