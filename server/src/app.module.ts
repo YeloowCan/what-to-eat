@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { User } from './entities/user.entity';
+import { Dish } from './entities/dish.entity';
 import { UsersModule } from './modules/users/users.module';
 import { JwtModule } from './modules/auth/jwt/jwt.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -23,7 +24,7 @@ import { AuthModule } from './modules/auth/auth.module';
         username: configService.get<string>('DB_USERNAME', 'postgres'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE', 'what_to_eat'),
-        entities: [User],
+        entities: [User, Dish],
         synchronize: configService.get<string>('NODE_ENV') === 'development',
         logging: configService.get<string>('NODE_ENV') === 'development',
       }),

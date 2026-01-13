@@ -151,7 +151,7 @@
   - 连接参数从环境变量读取（`DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`）
   - 开发环境启用 `synchronize`（自动同步数据库结构）和 `logging`（SQL 日志）
   - 生产环境禁用 `synchronize`，使用数据库迁移管理结构
-  - 实体数组：`[User]`（已注册 User 实体）
+  - 实体数组：`[User, Dish]`（已注册 User 和 Dish 实体）
 - **已导入模块**：
   - `UsersModule` - 用户模块
 - **后续扩展**：将添加更多业务模块（菜品、饮食记录、健康分析等）
@@ -201,6 +201,37 @@
   - `profile` 字段使用 PostgreSQL JSONB 类型
 - **用途**：用于用户认证、健康分析、个性化推荐等功能
 
+#### `entities/dish.entity.ts`
+- **作用**：菜品实体类定义
+- **对应表**：`dishes`
+- **包含内容**：
+  - `Nutrition` 接口 - 营养成分类型定义
+    - `calories: number` - 卡路里（kcal）
+    - `protein: number` - 蛋白质（g）
+    - `fat: number` - 脂肪（g）
+    - `carbs: number` - 碳水化合物（g）
+  - `Dish` 实体类 - 菜品实体
+    - `id` - 主键，自增整数
+    - `name` - 菜品名称，最大 100 字符，必填
+    - `category` - 菜品分类，最大 50 字符，可选
+    - `cuisineType` - 菜系类型，最大 50 字符，可选（数据库列名：`cuisine_type`）
+    - `nutrition` - 营养成分（JSONB 类型），必填，包含 calories, protein, fat, carbs
+    - `tags` - 标签数组（text[] 类型），可选
+    - `description` - 描述（text 类型），可选
+    - `userId` - 创建者用户 ID（数据库列名：`user_id`），可选
+    - `user` - 与 User 实体的关联关系（ManyToOne），可选
+    - `createdAt` - 创建时间（数据库列名：`created_at`），自动管理
+- **关系**：
+  - 与 User 实体建立 ManyToOne 关系（可选）
+  - 外键约束：`user_id` 引用 `users.id`
+  - 删除策略：`onDelete: 'SET NULL'`（删除用户时，将 userId 设置为 NULL）
+- **数据类型**：
+  - JSONB 类型：`nutrition` 字段使用 PostgreSQL 的 JSONB 类型存储营养成分对象
+  - 数组类型：`tags` 字段使用 PostgreSQL 的 text[] 类型存储标签数组
+  - 所有字段都明确指定了 TypeORM 类型（`type: 'varchar'`, `type: 'jsonb'`, `type: 'text'`, `type: 'int'`）
+- **用途**：用于菜品推荐、饮食记录、健康分析等功能
+- **注意**：MVP 阶段不包含 `imageUrl` 字段（先支持文本）
+
 ---
 
 ### 数据源配置（src/data-source.ts）
@@ -213,7 +244,7 @@
   - 提供迁移命令使用的数据源
 - **配置内容**：
   - 数据库连接参数（从环境变量读取）
-  - 实体列表：`[User]`
+  - 实体列表：`[User, Dish]`
   - 迁移文件路径：`src/database/migrations/*{.ts,.js}`
   - `synchronize: false` - 迁移时禁用自动同步
 - **使用场景**：
@@ -238,6 +269,11 @@
   - `migration:generate` - 生成迁移文件
   - `migration:run` - 运行迁移
   - `migration:revert` - 回滚迁移
+- **现有迁移文件**：
+  - `1736736568000-CreateDishEntity.ts` - 创建 dishes 表的迁移文件
+    - 创建 `dishes` 表，包含所有字段定义
+    - 创建外键约束（`user_id` 引用 `users.id`）
+    - 支持回滚操作
 
 ---
 

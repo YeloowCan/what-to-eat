@@ -2029,3 +2029,77 @@ getProfile(@CurrentUser() user: JwtPayload) {
 
 ---
 
+## 阶段 3：核心功能 MVP
+
+### ✅ 3.1 创建菜品实体（Dish Entity）（已完成）
+
+**完成时间**：2026年1月13日
+
+**完成内容**：
+1. 创建了 `Dish` 实体类，包含所有必需字段
+2. 定义了 `Nutrition` 接口，用于存储营养成分信息
+3. 建立了与 User 实体的外键关系（可选，支持用户手动录入）
+4. 在 `app.module.ts` 和 `data-source.ts` 中注册了 Dish 实体
+5. 创建了数据库迁移文件
+
+**创建的文件和目录**：
+- `server/src/entities/dish.entity.ts` - Dish 实体类定义
+- `server/src/database/migrations/1736736568000-CreateDishEntity.ts` - 数据库迁移文件
+
+**修改的文件**：
+- `server/src/app.module.ts` - 添加了 Dish 实体导入和注册
+- `server/src/data-source.ts` - 添加了 Dish 实体导入和注册
+
+**Dish 实体字段详情**：
+- `id` - 主键，自增整数
+- `name` - 菜品名称，最大长度 100 字符，必填
+- `category` - 菜品分类，最大长度 50 字符，可选
+- `cuisineType` - 菜系类型，最大长度 50 字符，可选（数据库列名：`cuisine_type`）
+- `nutrition` - 营养成分（JSONB 类型），必填，包含：
+  - `calories` - 卡路里（kcal）
+  - `protein` - 蛋白质（g）
+  - `fat` - 脂肪（g）
+  - `carbs` - 碳水化合物（g）
+- `tags` - 标签数组（text[] 类型），可选
+- `description` - 描述（text 类型），可选
+- `userId` - 创建者用户 ID（数据库列名：`user_id`），可选
+- `user` - 与 User 实体的关联关系（ManyToOne），可选
+- `createdAt` - 创建时间（数据库列名：`created_at`），自动管理
+
+**Nutrition 接口定义**：
+- `calories: number` - 卡路里（kcal）
+- `protein: number` - 蛋白质（g）
+- `fat: number` - 脂肪（g）
+- `carbs: number` - 碳水化合物（g）
+
+**技术细节**：
+- 使用 TypeORM 装饰器：`@Entity`, `@Column`, `@PrimaryGeneratedColumn`, `@CreateDateColumn`, `@ManyToOne`, `@JoinColumn`
+- 数据库表名：`dishes`（snake_case）
+- 数据库列名：使用 snake_case（`cuisine_type`, `user_id`, `created_at`）
+- JSONB 类型：`nutrition` 字段使用 PostgreSQL 的 JSONB 类型存储营养成分对象
+- 数组类型：`tags` 字段使用 PostgreSQL 的 text[] 类型存储标签数组
+- 外键关系：与 User 实体建立 ManyToOne 关系，`onDelete: 'SET NULL'`（删除用户时，将 userId 设置为 NULL）
+- 字段类型：所有字段都明确指定了 TypeORM 类型（`type: 'varchar'`, `type: 'jsonb'`, `type: 'text'`, `type: 'int'`）
+
+**迁移文件详情**：
+- 迁移文件：`1736736568000-CreateDishEntity.ts`
+- 包含创建 `dishes` 表的逻辑
+- 包含创建外键约束的逻辑（`user_id` 引用 `users.id`）
+- 支持回滚（`down` 方法）
+
+**验证结果**：
+- ✅ 创建了 `Dish` 实体类，包含所有必需字段
+- ✅ 定义了 `Nutrition` 接口
+- ✅ 建立了与 User 实体的外键关系
+- ✅ 在 `app.module.ts` 和 `data-source.ts` 中注册了 Dish 实体
+- ✅ 创建了数据库迁移文件
+- ⏳ 运行迁移，应在数据库中创建 `dishes` 表（需要用户验证）
+- ⏳ 插入测试数据，应成功保存（需要用户验证）
+- ⏳ 查询数据，nutrition 字段应正确解析为对象（需要用户验证）
+- ⏳ tags 数组字段应正确存储和查询（需要用户验证）
+- ⏳ 插入包含 userId 的数据，应成功保存（需要用户验证）
+
+**下一步**：3.2 创建菜品模块基础结构
+
+---
+
