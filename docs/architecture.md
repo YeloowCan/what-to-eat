@@ -797,6 +797,11 @@
     - 使用 TypeORM 的 `findOne()` 方法查询数据库
     - 如果菜品不存在，返回 `null`
     - 如果菜品存在，返回完整的菜品信息
+  - `create(createDishDto: CreateDishDto, userId: number)`: 创建菜品
+    - 接收菜品创建数据和创建者用户 ID
+    - 使用 TypeORM 的 `create()` 和 `save()` 方法创建和保存菜品
+    - 自动保存创建者 `userId` 到数据库
+    - 返回创建的菜品信息
 - **分页结果接口**：
   ```typescript
   interface PaginatedResult<T> {
@@ -830,6 +835,14 @@
     - 调用 `dishesService.findOne()` 获取菜品详情
     - 如果菜品不存在，抛出 `NotFoundException`，返回统一错误格式
     - 返回统一响应格式（`SuccessResponse<Dish>`）
+  - `POST /v1/dishes` - 创建菜品
+    - 使用 `@Post()` 装饰器定义路由
+    - 使用 `@UseGuards(JwtAuthGuard)` 保护路由，需要 JWT 认证
+    - 使用 `@CurrentUser()` 装饰器获取当前登录用户的 JWT payload
+    - 接收请求体（CreateDishDto）
+    - 从 JWT payload 中提取用户 ID（`jwtPayload.sub`）
+    - 调用 `dishesService.create()` 创建菜品，自动保存创建者 userId
+    - 返回统一响应格式（`SuccessResponse<Dish>`），状态码 201
 - **Swagger 文档**：
   - 使用 `@ApiTags('dishes')` 装饰器将控制器分组到 dishes 标签
   - 使用 `@ApiOperation` 添加接口描述和说明
@@ -862,6 +875,35 @@
   - 包含字段描述、示例值、范围限制、可选标记等信息
   - 自动生成 Swagger API 文档
 - **用途**：用于获取菜品列表接口的查询参数验证
+
+#### `modules/dishes/dto/create-dish.dto.ts`
+- **作用**：创建菜品 DTO
+- **包含内容**：
+  - `NutritionDto` 类 - 营养成分 DTO
+    - `calories: number` - 卡路里（kcal），必填
+    - `protein: number` - 蛋白质（g），必填
+    - `fat: number` - 脂肪（g），必填
+    - `carbs: number` - 碳水化合物（g），必填
+  - `CreateDishDto` 类 - 创建菜品 DTO
+    - `name: string` - 菜品名称，必填，最大长度 100 字符
+    - `category?: string` - 菜品分类，可选，最大长度 50 字符
+    - `cuisineType?: string` - 菜系类型，可选，最大长度 50 字符
+    - `nutrition: NutritionDto` - 营养成分，必填，对象类型
+    - `tags?: string[]` - 标签数组，可选
+    - `description?: string` - 菜品描述，可选
+- **验证规则**：
+  - 使用 `class-validator` 装饰器进行验证
+  - `name` 字段：`@IsString()`, `@IsNotEmpty()`, `@MaxLength(100)`
+  - `nutrition` 字段：`@IsObject()`, `@IsNotEmpty()`, `@ValidateNested()`, `@Type(() => NutritionDto)`
+  - `NutritionDto` 中的字段：`@IsNumber()`, `@IsNotEmpty()`
+  - 可选字段：`@IsOptional()`
+  - 使用 `@ValidateNested()` 和 `@Type()` 验证嵌套对象
+- **Swagger 文档**：
+  - 使用 `@ApiProperty` 装饰器为每个字段添加 API 文档说明
+  - 包含字段描述、示例值、类型、可选标记等信息
+  - 嵌套对象（NutritionDto）也包含完整的文档说明
+  - 自动生成 Swagger API 文档
+- **用途**：用于创建菜品接口的请求数据验证
 
 ---
 

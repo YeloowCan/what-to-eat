@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Dish } from '../../entities/dish.entity';
 import { QueryDishesDto } from './dto/query-dishes.dto';
+import { CreateDishDto } from './dto/create-dish.dto';
 
 /**
  * 分页结果接口
@@ -84,6 +85,33 @@ export class DishesService {
     }
 
     return dish;
+  }
+
+  /**
+   * 创建菜品
+   * @param createDishDto 菜品创建数据
+   * @param userId 创建者用户 ID
+   * @returns 创建的菜品信息
+   */
+  async create(
+    createDishDto: CreateDishDto,
+    userId: number,
+  ): Promise<Dish> {
+    // 创建菜品实体
+    const dish = this.dishRepository.create({
+      name: createDishDto.name,
+      category: createDishDto.category || null,
+      cuisineType: createDishDto.cuisineType || null,
+      nutrition: createDishDto.nutrition,
+      tags: createDishDto.tags || null,
+      description: createDishDto.description || null,
+      userId,
+    });
+
+    // 保存到数据库
+    const savedDish = await this.dishRepository.save(dish);
+
+    return savedDish;
   }
 }
 

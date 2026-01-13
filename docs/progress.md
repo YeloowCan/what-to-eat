@@ -2369,3 +2369,139 @@ getProfile(@CurrentUser() user: JwtPayload) {
 
 ---
 
+### ✅ 3.5 实现创建菜品 API（用户手动录入）（已完成）
+
+**完成时间**：2026年1月13日
+
+**完成内容**：
+1. 创建了 `CreateDishDto`，包含所有必需字段和验证规则
+2. 创建了 `NutritionDto`，用于验证营养成分对象
+3. 在 `dishes.service.ts` 中实现了 `create` 方法
+4. 在 `dishes.controller.ts` 中创建了 `POST /v1/dishes` 端点
+5. 使用 JWT 守卫保护路由（只有登录用户才能创建）
+6. 实现了保存创建者 userId 的功能
+7. 添加了完整的 Swagger 文档装饰器
+
+**创建的文件和目录**：
+- `server/src/modules/dishes/dto/create-dish.dto.ts` - 创建菜品 DTO
+
+**修改的文件**：
+- `server/src/modules/dishes/dishes.service.ts` - 添加了 `create` 方法
+- `server/src/modules/dishes/dishes.controller.ts` - 添加了 `POST /v1/dishes` 端点
+
+**CreateDishDto 字段详情**：
+- `name` - 菜品名称，必填，字符串，最大长度 100 字符
+- `category` - 菜品分类，可选，字符串，最大长度 50 字符
+- `cuisineType` - 菜系类型，可选，字符串，最大长度 50 字符
+- `nutrition` - 营养成分，必填，对象类型（NutritionDto）
+- `tags` - 标签数组，可选，字符串数组
+- `description` - 菜品描述，可选，字符串
+
+**NutritionDto 字段详情**：
+- `calories` - 卡路里（kcal），必填，数字类型
+- `protein` - 蛋白质（g），必填，数字类型
+- `fat` - 脂肪（g），必填，数字类型
+- `carbs` - 碳水化合物（g），必填，数字类型
+
+**验证规则**：
+- 使用 `class-validator` 装饰器进行验证
+- `name` 字段：`@IsString()`, `@IsNotEmpty()`, `@MaxLength(100)`
+- `nutrition` 字段：`@IsObject()`, `@IsNotEmpty()`, `@ValidateNested()`, `@Type(() => NutritionDto)`
+- `NutritionDto` 中的字段：`@IsNumber()`, `@IsNotEmpty()`
+- 可选字段：`@IsOptional()`
+- 使用 `@Type()` 装饰器确保嵌套对象正确转换
+
+**create 方法实现详情**：
+- **参数**：
+  - `createDishDto: CreateDishDto` - 菜品创建数据
+  - `userId: number` - 创建者用户 ID
+- **返回值**：`Promise<Dish>` - 创建的菜品信息
+- **功能流程**：
+  1. 使用 `dishRepository.create()` 创建菜品实体
+  2. 设置所有字段（包括可选的 category, cuisineType, tags, description）
+  3. 设置创建者 `userId`
+  4. 使用 `dishRepository.save()` 保存到数据库
+  5. 返回创建的菜品信息
+
+**API 端点详情**：
+- **路径**：`POST /v1/dishes`
+- **认证**：需要 JWT token（Bearer token）
+- **请求头**：`Authorization: Bearer <token>`
+- **请求体**：`CreateDishDto`
+  ```json
+  {
+    "name": "宫保鸡丁",
+    "category": "川菜",
+    "cuisineType": "中式",
+    "nutrition": {
+      "calories": 250,
+      "protein": 20,
+      "fat": 10,
+      "carbs": 15
+    },
+    "tags": ["辣", "下饭"],
+    "description": "经典川菜，麻辣鲜香"
+  }
+  ```
+- **成功响应（201）**：
+  ```json
+  {
+    "success": true,
+    "data": {
+      "id": 1,
+      "name": "宫保鸡丁",
+      "category": "川菜",
+      "cuisineType": "中式",
+      "nutrition": {
+        "calories": 250,
+        "protein": 20,
+        "fat": 10,
+        "carbs": 15
+      },
+      "tags": ["辣", "下饭"],
+      "description": "经典川菜，麻辣鲜香",
+      "userId": 1,
+      "createdAt": "2025-12-31T12:00:00.000Z"
+    },
+    "message": "创建成功"
+  }
+  ```
+- **错误响应（400）**：请求参数验证失败（VALIDATION_001）
+- **错误响应（401）**：未授权，需要登录（AUTH_001）
+
+**认证和授权**：
+- 使用 `@UseGuards(JwtAuthGuard)` 保护路由
+- 使用 `@CurrentUser()` 装饰器获取当前登录用户的 JWT payload
+- 从 JWT payload 中提取用户 ID（`jwtPayload.sub`）
+- 自动保存创建者 `userId` 到数据库
+
+**技术细节**：
+- 使用 TypeORM 的 `create()` 和 `save()` 方法创建和保存菜品
+- 使用 `@ValidateNested()` 和 `@Type()` 验证嵌套对象（nutrition）
+- 可选字段使用 `|| null` 确保数据库存储为 null 而不是 undefined
+- 返回统一响应格式（`SuccessResponse<Dish>`）
+- 使用 `@HttpCode(HttpStatus.CREATED)` 返回 201 状态码
+
+**Swagger 文档**：
+- 使用 `@ApiBearerAuth()` 添加 Bearer 认证支持
+- 使用 `@ApiOperation` 添加接口描述和说明
+- 使用 `@ApiBody` 说明请求体（CreateDishDto）
+- 使用 `@ApiResponse` 定义成功响应（201）和错误响应（400、401）
+- 包含完整的示例值和字段说明
+- 支持在 Swagger UI 中直接测试（需要先登录获取 token）
+
+**验证结果**：
+- ✅ 创建了 `CreateDishDto` 和 `NutritionDto`，包含所有必需字段和验证规则
+- ✅ 实现了 `create` 方法，支持保存创建者 userId
+- ✅ 创建了 `POST /v1/dishes` 端点，使用 JWT 守卫保护
+- ✅ 添加了完整的 Swagger 文档
+- ⏳ 使用有效 token 创建菜品，应成功创建并返回 201（需要用户验证）
+- ⏳ 未认证时创建，应返回 401 错误（需要用户验证）
+- ⏳ 发送无效数据，应返回验证错误（需要用户验证）
+- ⏳ 检查数据库，应包含 userId（需要用户验证）
+- ⏳ 响应时间应小于 1 秒（需要用户验证）
+
+**下一步**：3.6 实现营养成分计算工具函数
+
+---
+
