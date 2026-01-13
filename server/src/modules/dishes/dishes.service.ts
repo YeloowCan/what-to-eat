@@ -113,5 +113,21 @@ export class DishesService {
 
     return savedDish;
   }
+
+  /**
+   * 随机获取一个菜品
+   * @returns 随机菜品信息，如果数据库中没有菜品返回 null
+   */
+  async getRandom(): Promise<Dish | null> {
+    // 使用 PostgreSQL 的 RANDOM() 函数随机排序
+    // 取第一条记录
+    const dish = await this.dishRepository
+      .createQueryBuilder('dish')
+      .orderBy('RANDOM()')
+      .limit(1)
+      .getOne();
+
+    return dish || null;
+  }
 }
 

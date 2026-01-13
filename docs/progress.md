@@ -2712,3 +2712,109 @@ pnpm run seed:dishes
 
 ---
 
+### ✅ 3.8 实现随机推荐菜品 API（已完成）
+
+**完成时间**：2026年1月13日
+
+**完成内容**：
+1. 在 `dishes.service.ts` 中实现了 `getRandom` 方法
+2. 在 `dishes.controller.ts` 中创建了 `GET /v1/dishes/recommend/random` 端点
+3. 实现了数据库中没有菜品时的错误处理
+4. 添加了完整的 Swagger 文档装饰器
+
+**修改的文件**：
+- `server/src/modules/dishes/dishes.service.ts` - 添加了 `getRandom` 方法
+- `server/src/modules/dishes/dishes.controller.ts` - 添加了 `GET /v1/dishes/recommend/random` 端点
+
+**getRandom 方法实现详情**：
+- **方法签名**：`async getRandom(): Promise<Dish | null>`
+- **功能**：从数据库中随机选择一条菜品记录
+- **实现方式**：
+  - 使用 TypeORM QueryBuilder 构建查询
+  - 使用 PostgreSQL 的 `RANDOM()` 函数随机排序
+  - 使用 `limit(1)` 取第一条记录
+  - 如果数据库中没有菜品，返回 `null`
+- **技术细节**：
+  - 使用 `createQueryBuilder('dish')` 创建查询构建器
+  - 使用 `orderBy('RANDOM()')` 实现随机排序
+  - 使用 `getOne()` 获取单条记录
+  - 返回类型为 `Promise<Dish | null>`
+
+**API 端点详情**：
+- **路径**：`GET /v1/dishes/recommend/random`
+- **认证**：不需要认证（公开端点）
+- **功能**：随机推荐一个菜品，用于"今天吃什么"功能
+- **成功响应（200）**：
+  ```json
+  {
+    "success": true,
+    "data": {
+      "id": 1,
+      "name": "宫保鸡丁",
+      "category": "川菜",
+      "cuisineType": "中式",
+      "nutrition": {
+        "calories": 250,
+        "protein": 20,
+        "fat": 10,
+        "carbs": 15
+      },
+      "tags": ["辣", "下饭"],
+      "description": "经典川菜，麻辣鲜香",
+      "userId": null,
+      "createdAt": "2025-12-31T12:00:00.000Z"
+    },
+    "message": "获取成功"
+  }
+  ```
+- **错误响应（404）**：数据库中没有菜品
+  ```json
+  {
+    "success": false,
+    "error": {
+      "code": "DISH_001",
+      "message": "菜品不存在"
+    },
+    "timestamp": "2025-12-31T12:00:00.000Z",
+    "path": "/v1/dishes/recommend/random"
+  }
+  ```
+
+**错误处理**：
+- 如果数据库中没有菜品，`getRandom()` 返回 `null`
+- 控制器检查返回值，如果为 `null`，抛出 `NotFoundException('数据库中没有菜品，请先添加菜品数据')`
+- 全局异常过滤器自动处理异常，返回统一错误格式
+- 错误码自动映射为 `DISH_001`（根据错误消息内容）
+
+**Swagger 文档**：
+- 使用 `@ApiOperation` 添加接口描述和说明
+- 使用 `@ApiResponse` 定义成功响应（200）和错误响应（404）
+- 包含完整的响应示例和字段说明
+- 支持在 Swagger UI 中直接测试
+
+**技术细节**：
+- 使用 PostgreSQL 的 `RANDOM()` 函数实现真正的随机选择
+- 每次调用都可能返回不同的菜品（或可能相同，因为是随机）
+- 不需要认证，公开端点，方便前端调用
+- 返回统一响应格式（`SuccessResponse<Dish>`）
+- 响应时间应小于 1 秒（使用数据库索引优化）
+
+**使用场景**：
+- "今天吃什么"功能：用户不知道吃什么时，可以随机推荐一个菜品
+- 菜品探索：帮助用户发现新的菜品
+- 快速决策：减少用户的选择困难
+
+**验证结果**：
+- ✅ 实现了 `getRandom` 方法，使用 PostgreSQL 的 `RANDOM()` 函数随机选择菜品
+- ✅ 创建了 `GET /v1/dishes/recommend/random` 端点
+- ✅ 实现了数据库中没有菜品时的错误处理
+- ✅ 添加了完整的 Swagger 文档
+- ⏳ 多次调用端点，应返回不同的菜品（或可能相同，因为是随机）（需要用户验证）
+- ⏳ 数据库中无菜品时，应返回 404 错误和统一错误格式（需要用户验证）
+- ⏳ 响应应包含完整的菜品信息（需要用户验证）
+- ⏳ 响应时间应小于 1 秒（需要用户验证）
+
+**下一步**：3.9 创建前端菜品类型定义
+
+---
+

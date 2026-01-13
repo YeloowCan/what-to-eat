@@ -972,6 +972,12 @@
     - 使用 TypeORM 的 `create()` 和 `save()` 方法创建和保存菜品
     - 自动保存创建者 `userId` 到数据库
     - 返回创建的菜品信息
+  - `getRandom()`: 随机获取一个菜品
+    - 使用 TypeORM QueryBuilder 构建查询
+    - 使用 PostgreSQL 的 `RANDOM()` 函数随机排序
+    - 使用 `limit(1)` 取第一条记录
+    - 如果数据库中没有菜品，返回 `null`
+    - 用于"今天吃什么"功能，随机推荐菜品
 - **分页结果接口**：
   ```typescript
   interface PaginatedResult<T> {
@@ -982,7 +988,6 @@
     totalPages: number;
   }
   ```
-- **后续扩展**：将添加菜品创建、更新、删除等业务逻辑方法
 
 #### `modules/dishes/dishes.controller.ts`
 - **作用**：菜品控制器，处理菜品相关的 HTTP 请求
@@ -1013,6 +1018,14 @@
     - 从 JWT payload 中提取用户 ID（`jwtPayload.sub`）
     - 调用 `dishesService.create()` 创建菜品，自动保存创建者 userId
     - 返回统一响应格式（`SuccessResponse<Dish>`），状态码 201
+  - `GET /v1/dishes/recommend/random` - 随机推荐菜品
+    - 使用 `@Get('recommend/random')` 装饰器定义路由
+    - 不需要认证（公开端点）
+    - 调用 `dishesService.getRandom()` 获取随机菜品
+    - 如果数据库中没有菜品，抛出 `NotFoundException`，返回统一错误格式
+    - 返回统一响应格式（`SuccessResponse<Dish>`）
+    - 用于"今天吃什么"功能，帮助用户快速决策
+    - 每次调用都可能返回不同的菜品（或可能相同，因为是随机）
 - **Swagger 文档**：
   - 使用 `@ApiTags('dishes')` 装饰器将控制器分组到 dishes 标签
   - 使用 `@ApiOperation` 添加接口描述和说明

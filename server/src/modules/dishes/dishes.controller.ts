@@ -355,5 +355,95 @@ export class DishesController {
       message: '创建成功',
     };
   }
+
+  /**
+   * 随机推荐菜品
+   * 从数据库中随机选择一条菜品记录
+   * @returns 随机菜品信息
+   */
+  @Get('recommend/random')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '随机推荐菜品',
+    description: '从数据库中随机选择一条菜品记录，用于"今天吃什么"功能',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '成功返回随机菜品',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        data: {
+          type: 'object',
+          properties: {
+            id: { type: 'number', example: 1 },
+            name: { type: 'string', example: '宫保鸡丁' },
+            category: { type: 'string', example: '川菜', nullable: true },
+            cuisineType: { type: 'string', example: '中式', nullable: true },
+            nutrition: {
+              type: 'object',
+              properties: {
+                calories: { type: 'number', example: 250 },
+                protein: { type: 'number', example: 20 },
+                fat: { type: 'number', example: 10 },
+                carbs: { type: 'number', example: 15 },
+              },
+            },
+            tags: {
+              type: 'array',
+              items: { type: 'string' },
+              example: ['辣', '下饭'],
+              nullable: true,
+            },
+            description: {
+              type: 'string',
+              example: '经典川菜，麻辣鲜香',
+              nullable: true,
+            },
+            userId: { type: 'number', example: null, nullable: true },
+            createdAt: {
+              type: 'string',
+              format: 'date-time',
+              example: '2025-12-31T12:00:00.000Z',
+            },
+          },
+        },
+        message: { type: 'string', example: '获取成功' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: '数据库中没有菜品',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: false },
+        error: {
+          type: 'object',
+          properties: {
+            code: { type: 'string', example: 'DISH_001' },
+            message: { type: 'string', example: '菜品不存在' },
+          },
+        },
+        timestamp: { type: 'string', format: 'date-time' },
+        path: { type: 'string', example: '/v1/dishes/recommend/random' },
+      },
+    },
+  })
+  async getRandom(): Promise<SuccessResponse<Dish>> {
+    const dish = await this.dishesService.getRandom();
+
+    if (!dish) {
+      throw new NotFoundException('数据库中没有菜品，请先添加菜品数据');
+    }
+
+    return {
+      success: true,
+      data: dish,
+      message: '获取成功',
+    };
+  }
 }
 
