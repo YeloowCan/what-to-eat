@@ -2103,3 +2103,57 @@ getProfile(@CurrentUser() user: JwtPayload) {
 
 ---
 
+### ✅ 3.2 创建菜品模块基础结构（已完成）
+
+**完成时间**：2026年1月13日
+
+**完成内容**：
+1. 创建了 `dishes` 模块目录结构
+2. 创建了 `dishes.module.ts`，注册了 TypeORM 特性模块
+3. 创建了 `dishes.service.ts`（空实现）
+4. 创建了 `dishes.controller.ts`（空实现）
+5. 在 `app.module.ts` 中导入了 `DishesModule`
+
+**创建的文件和目录**：
+- `server/src/modules/dishes/` - 菜品模块目录
+  - `dishes.module.ts` - 菜品模块定义
+  - `dishes.service.ts` - 菜品服务（空实现）
+  - `dishes.controller.ts` - 菜品控制器（空实现）
+
+**修改的文件**：
+- `server/src/app.module.ts` - 在 `imports` 数组中添加了 `DishesModule`
+
+**模块配置详情**：
+- **DishesModule**：
+  - 使用 `TypeOrmModule.forFeature([Dish])` 注册 TypeORM 特性模块
+  - 注册了 `DishesController` 和 `DishesService`
+  - 导出了 `DishesService`（供其他模块使用）
+- **DishesService**：
+  - 使用 `@Injectable()` 装饰器
+  - 注入了 `Dish` 实体的 Repository
+  - 当前为空实现，已准备好添加业务逻辑
+- **DishesController**：
+  - 使用 `@Controller('dishes')` 装饰器，路由前缀为 `/dishes`
+  - 使用 `@ApiTags('dishes')` 装饰器，在 Swagger 中分组到 dishes 标签
+  - 注入了 `DishesService`
+  - 当前为空实现，已准备好添加路由处理
+
+**技术细节**：
+- 模块结构遵循 NestJS 最佳实践
+- 使用依赖注入模式
+- TypeORM 特性模块允许在服务中使用 Repository
+- 服务导出使其他模块可以复用菜品服务
+- 控制器路由前缀为 `/dishes`，完整路径为 `/v1/dishes`（包含全局前缀）
+
+**验证结果**：
+- ✅ 创建了 `dishes` 模块目录结构
+- ✅ 创建了 `dishes.module.ts`，注册了 TypeORM 特性模块
+- ✅ 创建了 `dishes.service.ts` 和 `dishes.controller.ts`（空实现）
+- ✅ 在 `app.module.ts` 中导入了 `DishesModule`
+- ⏳ 启动应用，应无模块错误（需要用户验证）
+- ⏳ 模块应正确导入到 app.module（需要用户验证）
+
+**下一步**：3.3 实现获取菜品列表 API
+
+---
+

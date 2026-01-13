@@ -154,7 +154,8 @@
   - 实体数组：`[User, Dish]`（已注册 User 和 Dish 实体）
 - **已导入模块**：
   - `UsersModule` - 用户模块
-- **后续扩展**：将添加更多业务模块（菜品、饮食记录、健康分析等）
+  - `DishesModule` - 菜品模块
+- **后续扩展**：将添加更多业务模块（饮食记录、健康分析等）
 
 #### `app.controller.ts`
 - **作用**：示例控制器，演示 NestJS 路由处理
@@ -752,6 +753,54 @@
 - **包含内容**：
   - `Gender` 枚举定义（MALE = 'male', FEMALE = 'female'）
 - **用途**：用于更新用户资料接口的请求数据验证
+
+#### `modules/dishes/`
+- **作用**：菜品模块目录
+- **位置**：`src/modules/dishes/`
+- **包含文件**：
+  - `dishes.module.ts` - 菜品模块定义
+  - `dishes.service.ts` - 菜品服务
+  - `dishes.controller.ts` - 菜品控制器
+
+#### `modules/dishes/dishes.module.ts`
+- **作用**：菜品模块定义文件
+- **功能**：
+  - 使用 `@Module` 装饰器定义模块
+  - 使用 `TypeOrmModule.forFeature([Dish])` 注册 TypeORM 特性模块
+  - 注册控制器和服务
+  - 导出服务供其他模块使用
+- **配置内容**：
+  - `imports: [TypeOrmModule.forFeature([Dish])]` - 注册 Dish 实体的 Repository
+  - `controllers: [DishesController]` - 注册控制器
+  - `providers: [DishesService]` - 注册服务
+  - `exports: [DishesService]` - 导出服务（供其他模块使用）
+
+#### `modules/dishes/dishes.service.ts`
+- **作用**：菜品服务，包含菜品相关的业务逻辑
+- **功能**：
+  - 使用 `@Injectable()` 装饰器，可被依赖注入
+  - 注入 `Dish` 实体的 Repository，用于数据库操作
+  - 实现菜品相关的业务逻辑方法（当前为空实现，后续步骤将添加）
+- **依赖注入**：
+  ```typescript
+  @InjectRepository(Dish)
+  private readonly dishRepository: Repository<Dish>
+  ```
+- **后续扩展**：将添加菜品查询、创建、更新、删除等业务逻辑方法
+
+#### `modules/dishes/dishes.controller.ts`
+- **作用**：菜品控制器，处理菜品相关的 HTTP 请求
+- **路由前缀**：`/dishes`（由 `@Controller('dishes')` 定义）
+- **完整路径**：`/v1/dishes`（包含全局前缀 `/v1`）
+- **功能**：
+  - 处理菜品相关的 HTTP 请求和响应
+  - 调用服务层处理业务逻辑
+  - 返回统一的响应格式
+- **Swagger 文档**：
+  - 使用 `@ApiTags('dishes')` 装饰器将控制器分组到 dishes 标签
+  - 在 Swagger UI 中显示为独立的接口组
+- **当前状态**：空实现，已准备好添加路由处理（后续步骤将添加）
+- **依赖注入**：注入 `DishesService` 用于业务逻辑处理
 
 ---
 

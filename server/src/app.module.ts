@@ -8,6 +8,7 @@ import { Dish } from './entities/dish.entity';
 import { UsersModule } from './modules/users/users.module';
 import { JwtModule } from './modules/auth/jwt/jwt.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { DishesModule } from './modules/dishes/dishes.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { AuthModule } from './modules/auth/auth.module';
     UsersModule,
     JwtModule,
     AuthModule,
+    DishesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
